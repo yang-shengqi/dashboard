@@ -1,0 +1,259 @@
+/* ============================================================
+ * tokens.css —— 全局设计令牌（唯一定义处）
+ * ------------------------------------------------------------
+ * 本次改动：
+ *   ★ --text-3 在暗色下提亮到接近白；亮色下加深到接近黑
+ *     —— 全站所有 "次要灰字"（编号/更新日期/预设汇率等）跟着变
+ * ============================================================ */
+
+/* ============================================================
+ * 一、与主题、皮肤无关
+ * ============================================================ */
+:root {
+  --ease:     cubic-bezier(.22, 1, .36, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --dur-fast: .18s;
+  --dur-mid:  .32s;
+  --dur-slow: .40s;
+
+  --nav-h:  60px;
+  --max-w:  1280px;
+  --gutter: 32px;
+
+  --r-xs:   6px;
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   18px;
+  --r-xl:   24px;
+  --r-full: 999px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Inter, "Helvetica Neue", Arial, "PingFang SC",
+               "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+               Consolas, monospace;
+
+  --fs-xs:   11px;
+  --fs-sm:   12.5px;
+  --fs-base: 14px;
+  --fs-md:   14.5px;
+  --fs-lg:   16px;
+  --fs-xl:   22px;
+  --fs-2xl:  28px;
+  --fs-3xl:  34px;
+}
+
+/* ============================================================
+ * 二、色相通道 —— 默认值
+ * ============================================================ */
+:root {
+  --rgb-blue:   10 132 255;
+  --rgb-green:  48 209 88;
+  --rgb-orange: 255 159 10;
+  --rgb-violet: 94 92 230;
+  --rgb-red:    255 69 58;
+  --rgb-gold:   212 168 67;
+}
+
+/* ============================================================
+ * 三、语义色
+ * ============================================================ */
+:root {
+  --accent:        rgb(var(--rgb-blue));
+  --accent-2:      rgb(var(--rgb-green));
+  --accent-3:      rgb(var(--rgb-orange));
+  --accent-violet: rgb(var(--rgb-violet));
+  --accent-red:    rgb(var(--rgb-red));
+  --gold:          rgb(var(--rgb-gold));
+
+  --state-ok:   rgb(var(--rgb-green));
+  --state-warn: rgb(var(--rgb-orange));
+  --state-fail: rgb(var(--rgb-red));
+
+  --chart-1: rgb(var(--rgb-blue));
+  --chart-2: rgb(var(--rgb-green));
+  --chart-3: rgb(var(--rgb-orange));
+  --chart-4: rgb(var(--rgb-violet));
+  --chart-5: rgb(var(--rgb-red));
+}
+
+/* ============================================================
+ * 四、亮色主题
+ * ============================================================ */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:        #fbfbfd;
+  --surface:   rgba(255, 255, 255, .42);
+  --surface-2: rgba(0, 0, 0, .03);
+  --surface-3: rgba(0, 0, 0, .055);
+
+  --text:   #09090b;
+  --text-2: #27272a;      /* ★ 从 #52525b 加深 */
+  --text-3: #18181b;      /* ★ 从 #a1a1aa 加深到接近黑 */
+
+  --border:   rgba(0, 0, 0, .08);
+  --border-2: rgba(0, 0, 0, .15);
+
+  --glass-hi:       rgba(255, 255, 255, .90);
+  --glass-ref:      rgba(255, 255, 255, .55);
+  --glass-blur:     24px;
+  --glass-saturate: 200%;
+
+  --shadow:    0 1px 2px rgba(0, 0, 0, .04),
+               0 10px 30px rgba(0, 0, 0, .06);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, .10);
+
+  --code-bg:  rgba(0, 0, 0, .045);
+  --thead-bg: #f5f5f8;
+
+  --chart-grid: rgba(0, 0, 0, .06);
+  --chart-axis: #18181b;   /* ★ 坐标轴加深 */
+  --chart-text: #18181b;   /* ★ 图表文字加深 */
+  --chart-bg:   transparent;
+
+  --glow-alpha: .50;
+  --grid-line:  rgba(0, 0, 0, .05);
+  --band-blue:   rgb(var(--rgb-blue)   / .55);
+  --band-green:  rgb(var(--rgb-green)  / .42);
+  --band-orange: rgb(var(--rgb-orange) / .50);
+
+  --nav-bg:     rgba(251, 251, 253, .70);
+  --nav-bd:     rgba(0, 0, 0, .07);
+  --nav-tint-a: .26;
+  --nav-tint-b: .20;
+  --nav-tint-c: .18;
+
+  --pill:   rgba(0, 0, 0, .055);
+  --pill-h: rgba(0, 0, 0, .09);
+
+  --gold-ink: #a8862f;
+}
+
+/* ============================================================
+ * 五、暗色主题
+ * ============================================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:        #09090b;
+  --surface:   rgba(255, 255, 255, .028);
+  --surface-2: rgba(255, 255, 255, .07);
+  --surface-3: rgba(255, 255, 255, .10);
+
+  --text:   #fafafa;
+  --text-2: #d4d4d8;      /* ★ 从 #a1a1aa 提亮 */
+  --text-3: #e4e4e7;      /* ★ 从 #71717a 提亮到接近白 */
+
+  --border:   rgba(255, 255, 255, .10);
+  --border-2: rgba(255, 255, 255, .18);
+
+  --glass-hi:       rgba(255, 255, 255, .10);
+  --glass-ref:      rgba(255, 255, 255, .06);
+  --glass-blur:     22px;
+  --glass-saturate: 190%;
+
+  --shadow:    0 1px 2px rgba(0, 0, 0, .30),
+               0 14px 36px rgba(0, 0, 0, .30);
+  --shadow-lg: 0 28px 68px rgba(0, 0, 0, .60);
+
+  --code-bg:  rgba(255, 255, 255, .07);
+  --thead-bg: #141418;
+
+  --chart-grid: rgba(255, 255, 255, .055);
+  --chart-axis: #e4e4e7;   /* ★ 坐标轴提亮 */
+  --chart-text: #e4e4e7;   /* ★ 图表文字提亮 */
+  --chart-bg:   transparent;
+
+  --glow-alpha: .58;
+  --grid-line:  rgba(255, 255, 255, .055);
+  --band-blue:   rgb(var(--rgb-blue)   / .80);
+  --band-green:  rgb(var(--rgb-green)  / .58);
+  --band-orange: rgb(var(--rgb-orange) / .72);
+
+  --nav-bg:     rgba(9, 9, 11, .38);
+  --nav-bd:     rgba(255, 255, 255, .08);
+  --nav-tint-a: .42;
+  --nav-tint-b: .34;
+  --nav-tint-c: .30;
+
+  --pill:   rgba(255, 255, 255, .07);
+  --pill-h: rgba(255, 255, 255, .12);
+
+  --gold-ink: rgb(var(--rgb-gold));
+}
+
+/* ============================================================
+ * 六、皮肤
+ * ============================================================ */
+[data-skin="default"] {
+  --rgb-blue:   10 132 255;
+  --rgb-green:  48 209 88;
+  --rgb-orange: 255 159 10;
+  --rgb-violet: 94 92 230;
+  --rgb-red:    255 69 58;
+  --rgb-gold:   212 168 67;
+}
+
+[data-skin="warm"] {
+  --rgb-blue:   230 90 50;
+  --rgb-green:  200 140 60;
+  --rgb-orange: 255 160 40;
+  --rgb-violet: 190 80 120;
+  --rgb-red:    220 50 50;
+  --rgb-gold:   224 168 60;
+}
+
+[data-skin="ocean"] {
+  --rgb-blue:   20 130 200;
+  --rgb-green:  40 180 170;
+  --rgb-orange: 120 180 220;
+  --rgb-violet: 90 110 200;
+  --rgb-red:    230 100 130;
+  --rgb-gold:   90 180 210;
+}
+
+[data-skin="forest"] {
+  --rgb-blue:   70 140 80;
+  --rgb-green:  100 180 90;
+  --rgb-orange: 190 170 70;
+  --rgb-violet: 120 150 110;
+  --rgb-red:    190 90 60;
+  --rgb-gold:   160 180 70;
+}
+
+/* ============================================================
+ * 七、兼容别名
+ * ============================================================ */
+:root {
+  --text-strong:    var(--text);
+  --text-primary:   var(--text);
+  --text-muted:     var(--text-2);
+  --text-secondary: var(--text-2);
+  --text-dim:       var(--text-3);
+  --text-faint:     var(--text-3);
+
+  --border-strong:  var(--border-2);
+  --border-color:   var(--border);
+
+  --bg-card:         var(--surface);
+  --bg-table-stripe: var(--surface-2);
+
+  --brand:          var(--accent);
+
+  --color-accent:   var(--accent);
+  --color-ok:       var(--state-ok);
+  --color-warn:     var(--state-warn);
+  --color-bond:     var(--chart-2);
+  --color-stock:    var(--chart-4);
+  --color-gold:     var(--gold);
+  --color-gold-ink: var(--gold-ink);
+}

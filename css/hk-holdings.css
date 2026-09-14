@@ -1,0 +1,338 @@
+/* ============================================================
+ * hk-holdings.css —— HSBC 基金持仓表
+ * ------------------------------------------------------------
+ * 本次改动：
+ *   ★ 工具栏改为「左信息 / 右按钮」布局
+ *   ★ 「币种」表头居中，和内容对齐
+ *   ★ 「编号」列颜色改为 var(--text)，暗色下不再发灰
+ *   ★ 列宽 8/28/6/12/12/34，固定 380px 高
+ * ============================================================ */
+
+.hk-holdings-panel {
+  padding: 20px 22px 22px;
+  margin-bottom: 28px;
+}
+
+/* ---------- 工具栏：左信息 / 右按钮 ---------- */
+.hk-holdings-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* 左侧：数量 + 市值合计 */
+.hk-holdings-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hk-holdings-total {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.hk-holdings-total .num {
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 右侧：两个按钮 */
+.hk-holdings-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================================
+ * 滚动容器：固定 380px 高
+ * ============================================================ */
+.hk-holdings-panel .table-scroll {
+  position: relative;
+  height: 380px;
+  max-height: 380px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  -webkit-overflow-scrolling: touch;
+}
+
+.hk-holdings-panel .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.hk-holdings-panel .table-scroll::-webkit-scrollbar-track { background: transparent; }
+.hk-holdings-panel .table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 4px;
+}
+.hk-holdings-panel .table-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+}
+.hk-holdings-panel .table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+/* ============================================================
+ * 表格本体
+ * ============================================================ */
+.hk-holdings-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* ---------- 表头：sticky + 按列对齐 ---------- */
+.hk-holdings-panel thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  padding: 12px 14px;
+  background: var(--surface-3);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* 表头首尾单元格跟随滚动容器的圆角，防止 sticky 背景填平圆角 */
+.hk-holdings-panel thead tr:first-child th:first-child {
+  border-top-left-radius: var(--r-sm);
+}
+.hk-holdings-panel thead tr:first-child th:last-child {
+  border-top-right-radius: var(--r-sm);
+}
+
+.hk-holdings-panel thead th.num { text-align: right; }
+
+/* 「币种」表头居中，和内容对齐 */
+.hk-holdings-panel thead th:nth-child(3) { text-align: center; }
+
+/* ---------- 表体 ---------- */
+.hk-holdings-panel tbody td {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-holdings-panel tbody tr {
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.hk-holdings-panel tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.hk-holdings-panel tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- 各列 ---------- */
+.hk-holdings-panel .col-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.hk-holdings-panel .col-name {
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.hk-holdings-panel .col-name:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.hk-holdings-panel .col-ccy {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.hk-holdings-panel .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.hk-holdings-panel .col-asset {
+  white-space: normal;
+  line-height: 1.6;
+}
+
+/* ============================================================
+ * 资产标签（胶囊）
+ * ============================================================ */
+.hk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 500;
+  margin: 2px 4px 2px 0;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.hk-tag-stock { color: var(--chart-4); background: rgb(var(--rgb-violet) / .14); }
+.hk-tag-bond  { color: var(--chart-2); background: rgb(var(--rgb-green)  / .16); }
+.hk-tag-cash  { color: var(--chart-3); background: rgb(var(--rgb-orange) / .16); }
+.hk-tag-other { color: var(--text-2);  background: var(--pill); }
+
+.hk-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 2px 4px 2px 0;
+  line-height: 1.5;
+}
+
+.hk-type.div { color: var(--chart-1); background: rgb(var(--rgb-blue) / .14); }
+.hk-type.acc { color: var(--text-2);  background: var(--pill); }
+
+/* ============================================================
+ * 弹窗
+ * ============================================================ */
+.hk-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-mid) var(--ease);
+}
+
+.hk-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hk-modal-box {
+  width: 90%;
+  max-width: 620px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  overflow: hidden;
+}
+
+.hk-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hk-modal-head .title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.hk-modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.hk-modal-close:hover {
+  background: var(--pill);
+  color: var(--text);
+}
+
+.hk-modal-body {
+  padding: 18px 22px 22px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ============================================================
+ * 响应式
+ * ============================================================ */
+@media (max-width: 860px) {
+  .hk-holdings-panel .table-scroll {
+    height: 340px;
+    max-height: 340px;
+  }
+  .hk-holdings-panel thead th,
+  .hk-holdings-panel tbody td {
+    padding: 10px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hk-holdings-panel .table-scroll {
+    height: 300px;
+    max-height: 300px;
+  }
+  .hk-holdings-panel thead th,
+  .hk-holdings-panel tbody td {
+    padding: 8px 8px;
+    font-size: 12px;
+  }
+  .hk-holdings-panel .col-id { display: none; }
+}
+
+/* 卡片内部的 split-monitor / asset-overview 去掉自带左右 padding，
+   避免与外层 .hk-accounts-panel 的 22px 叠加成 44px */
+.hk-accounts-panel .split-monitor,
+.hk-accounts-panel .asset-overview {
+  padding-left: 0;
+  padding-right: 0;
+  margin-bottom: 0;
+}
