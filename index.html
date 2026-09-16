@@ -583,7 +583,7 @@
 
             </form>
 
-            <div class="foot" class="timer">The system is up and running.<span id="display">--</span><br>PBKDF2 + AES-256 + WebCrypto </div>
+            <div class="foot" class="timer">The system is up and running <span id="display">--</span><br>PBKDF2 + AES-256 + WebCrypto </div>
 
         </main>
     </div>
@@ -1267,6 +1267,106 @@ exports.init = init;
 
 
     <!-- 加密JS结束 -->
+
+<script>
+/* 登录页特效：标题粒子 + 背景流星 */
+(function(){
+  'use strict';
+
+  /* ---------- 标题粒子 ---------- */
+  (function(){
+    var title = document.querySelector('.title');
+    if (!title) return;
+
+    var COLS = ['var(--accent)', 'var(--accent-2)', 'var(--accent-violet)'];
+
+    for (var i = 0; i < 28; i++){
+      var p = document.createElement('span');
+      p.className = 'dust';
+      p.setAttribute('aria-hidden','true');
+
+      var size = 2 + Math.random() * 3;
+      p.style.setProperty('--pc', COLS[Math.floor(Math.random()*3)]);
+      p.style.left   = (Math.random()*100).toFixed(1) + '%';
+      p.style.top    = (30 + Math.random()*70).toFixed(1) + '%';
+      p.style.width  = size.toFixed(1) + 'px';
+      p.style.height = size.toFixed(1) + 'px';
+      p.style.animationDuration = (6 + Math.random()*8).toFixed(1) + 's';
+      p.style.animationDelay    = (-Math.random()*12).toFixed(1) + 's';
+      title.appendChild(p);
+    }
+  })();
+
+  /* ---------- 背景流星 ---------- */
+  (function(){
+    var MIN_GAP        = 800;    /* 两颗流星最小间隔（ms） */
+    var MAX_GAP        = 2000;   /* 两颗流星最大间隔（ms） */
+    var MAX_CONCURRENT = 12;     /* 同时存在的上限 */
+    var DUR_MIN        = 2.2;    /* 最短飞行时长（秒） */
+    var DUR_MAX        = 10;     /* 最长飞行时长（秒） */
+    var LEN_MIN        = 10;     /* 最短尾巴（px） */
+    var LEN_MAX        = 30;     /* 最长尾巴（px） */
+
+    var active = 0;
+
+    function spawn(){
+      if (active >= MAX_CONCURRENT || document.hidden){ schedule(); return; }
+
+      var el = document.createElement('div');
+      el.className = 'meteor';
+      el.setAttribute('aria-hidden','true');
+
+      var startX = 30 + Math.random()*80;
+      var startY = -15 + Math.random()*45;
+      el.style.left = startX + 'vw';
+      el.style.top  = startY + 'vh';
+
+      var len = LEN_MIN + Math.random()*(LEN_MAX - LEN_MIN);
+      var dur = DUR_MIN + Math.random()*(DUR_MAX - DUR_MIN);
+      el.style.setProperty('--len', len.toFixed(0) + 'px');
+      el.style.animationDuration = dur.toFixed(2) + 's';
+
+      document.body.appendChild(el);
+      active++;
+
+      el.addEventListener('animationend', function(){
+        active--;
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+
+      schedule();
+    }
+
+    function schedule(){
+      setTimeout(spawn, MIN_GAP + Math.random()*(MAX_GAP - MIN_GAP));
+    }
+
+    schedule();
+  })();
+
+})();
+</script>
+<script>
+const startDate = new Date(2025, 11, 1, 0, 0, 0); // 2025-12-01 00:00:00 本地时间
+const display = document.getElementById('display');
+
+function format(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${days}D ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+}
+
+function render() {
+  const diff = Date.now() - startDate.getTime();
+  display.textContent = format(diff);
+}
+
+render();
+setInterval(render, 1000);
+</script>
 
 
 </body>
