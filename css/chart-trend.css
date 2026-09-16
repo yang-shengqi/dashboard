@@ -1,0 +1,23 @@
+/* ============================================================
+ * chart-trend.css —— 多账户折线图
+ * ============================================================ */
+
+.trend-panel {
+  padding: 20px 22px 22px;
+  margin-bottom: 28px;
+}
+
+.trend-wrap {
+  position: relative;
+  height: 320px;
+}
+
+.trend-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .trend-wrap { height: 240px; }
+}

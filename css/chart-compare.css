@@ -1,0 +1,23 @@
+/* ============================================================
+ * chart-compare.css —— 双柱对比
+ * ============================================================ */
+
+.compare-panel {
+  padding: 20px 22px 22px;
+  margin-bottom: 28px;
+}
+
+.compare-wrap {
+  position: relative;
+  height: 320px;
+}
+
+.compare-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .compare-wrap { height: 240px; }
+}
