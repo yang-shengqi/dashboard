@@ -1,0 +1,73 @@
+/* ============================================================
+ * meteor.css —— 背景流星（颜色跟随主题色）
+ * ------------------------------------------------------------
+ * js/meteor.js 动态注入 .meteor 元素，每颗从屏幕右上方
+ * 向左下方飞过，飞完自动销毁。
+ *
+ * 流星颜色由 --meteor-color / --meteor-glow 两个变量控制，
+ * 默认从主题强调色 --accent 混出。换皮肤时自动跟着变。
+ *
+ * 2026-09-17：移除 cursor: none（配合关闭 cursor-aura.js），
+ *             恢复系统默认光标。
+ * ============================================================ */
+
+.meteor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;   /* 只加亮、不加暗，压在字上也柔和 */
+  opacity: 0;
+
+  /* ★ 流星主色：主题色 + 白 6:4，提亮到深底上可见 */
+  --meteor-color: color-mix(in srgb, var(--accent) 60%, #ffffff);
+  /* ★ 光晕色：同色但更淡 */
+  --meteor-glow:  color-mix(in srgb, var(--accent) 45%, transparent);
+
+  animation-name: meteorFall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+
+/* ---------- 流星尾 ---------- */
+.meteor::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border: solid;
+  border-width: 0.3px 0 0.3px var(--len, 10px);
+
+  /* ★ 尾部颜色跟随主题色 */
+  border-color: transparent transparent transparent var(--meteor-color);
+
+  border-radius: 1px 0 0 1px;
+  transform: rotate(-45deg);
+  transform-origin: 0 0;
+
+  /* ★ 光晕也跟随主题色 */
+  box-shadow: 0 0 2px var(--meteor-glow);
+}
+
+/* 亮色主题下压暗一点，避免在浅底上太扎眼 */
+[data-theme="light"] .meteor {
+  --meteor-color: color-mix(in srgb, var(--accent) 70%, #202040);
+  --meteor-glow:  color-mix(in srgb, var(--accent) 40%, transparent);
+  mix-blend-mode: multiply;
+}
+
+@keyframes meteorFall {
+  0%   { transform: translate3d(0, 0, 0);           opacity: 0; }
+  8%   { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { transform: translate3d(-90vw, 65vh, 0);    opacity: 0; }
+}
+
+#particleCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2147483647;
+  pointer-events: none;
+}

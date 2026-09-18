@@ -1,0 +1,313 @@
+/* ============================================================
+ * layout.css —— 页面骨架
+ * ------------------------------------------------------------
+ * 只管「位置 / 尺寸 / 层叠」，颜色外观一律去 components.css
+ * 颜色只允许 var(--xxx)
+ * 断点：860 / 560
+ * ------------------------------------------------------------
+ * ★ 本次改动：新增 main > .container 全局背景
+ *   规则写在媒体查询之外，电脑端与手机端共用同一条，
+ *   底色来自 tokens.css 的 --container-bg（当前 0.7）。
+ * ============================================================ */
+
+/* ============================================================
+ * 一、容器
+ * ============================================================ */
+.container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ============================================================
+ * ★ 主内容容器统一底（两端共用）
+ * ------------------------------------------------------------
+ * 用 main > .container 而不是 .container，是为了精确命中
+ * 主内容区，避开顶栏里的 <div class="container nav-inner">。
+ *
+ * 这里只给「背景色」，刻意不加圆角/边框/阴影——
+ * 因为容器贯穿整页，加圆角会在顶部/底部悬空。
+ *
+ * 想加圆角/内边距（会让内容与容器边缘拉开距离）：
+ *   border-radius: var(--r-lg);
+ *   padding: var(--sp-6) var(--gutter);
+ * 按需取消注释。
+ * ============================================================ */
+main {
+  background: var(--container-bg);
+}
+
+/* ============================================================
+ * 二、背景三层
+ * ============================================================ */
+.ambient,
+.grid-bg,
+.top-band {
+  position: fixed;
+  pointer-events: none;
+}
+
+.ambient {
+  inset: -240px;
+  z-index: -4;
+  filter: blur(90px);
+  transition: filter var(--dur-mid) var(--ease);
+}
+
+.ambient span {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(var(--c) / var(--glow-alpha)) 0%,
+    rgb(var(--c) / calc(var(--glow-alpha) * .45)) 38%,
+    rgb(var(--c) / calc(var(--glow-alpha) * .12)) 62%,
+    rgb(var(--c) / 0) 80%
+  );
+  transition: background var(--dur-slow) var(--ease);
+}
+
+.ambient .a1 { --c: var(--rgb-blue);   width: 1300px; height: 1300px; top: -380px; left: -380px; }
+.ambient .a2 { --c: var(--rgb-orange); width: 1100px; height: 1100px; top: -320px; right: -320px; }
+.ambient .a3 { --c: var(--rgb-green);  width: 1200px; height: 1200px; top:  160px; left: -500px; }
+.ambient .a4 { --c: var(--rgb-blue);   width: 1200px; height: 1200px; top:  860px; right: -500px; }
+.ambient .a5 { --c: var(--rgb-orange); width: 1200px; height: 1200px; top: 1620px; left: -460px; }
+.ambient .a6 { --c: var(--rgb-green);  width: 1200px; height: 1200px; top: 2380px; right: -500px; }
+
+.grid-bg {
+  inset: 0;
+  z-index: -3;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0, #000 94%, transparent 100%);
+  mask-image: linear-gradient(to bottom,
+    #000 0, #000 94%, transparent 100%);
+  transition: background-image var(--dur-mid) var(--ease);
+}
+
+.top-band {
+  top: 0; left: 0; right: 0;
+  height: 280px;
+  z-index: -2;
+  filter: blur(36px);
+  background:
+    radial-gradient(58% 150% at  12% -10%, var(--band-blue)   0%, transparent 68%),
+    radial-gradient(52% 150% at  68% -10%, var(--band-orange) 0%, transparent 68%),
+    radial-gradient(46% 150% at 102% -10%, var(--band-green)  0%, transparent 68%);
+  transition: background var(--dur-slow) var(--ease);
+}
+
+/* ============================================================
+ * 三、顶栏骨架
+ * ============================================================ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: var(--nav-h);
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-bd);
+  backdrop-filter: blur(22px) saturate(190%);
+  -webkit-backdrop-filter: blur(22px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+  transition:
+    background var(--dur-mid) var(--ease),
+    border-color var(--dur-mid) var(--ease);
+}
+
+/* 顶栏彩色渐变层（换肤自动变） */
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(44% 220% at  6% 50%,
+      rgb(var(--rgb-blue)   / var(--nav-tint-a)), transparent 72%),
+    radial-gradient(40% 220% at 54% 50%,
+      rgb(var(--rgb-orange) / var(--nav-tint-b)), transparent 72%),
+    radial-gradient(38% 220% at 98% 50%,
+      rgb(var(--rgb-green)  / var(--nav-tint-c)), transparent 72%);
+  transition: background var(--dur-slow) var(--ease);
+}
+
+.nav-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* ---------- 品牌区 ---------- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand .mark {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  /* 外观（渐变底 / 阴影）在 components.css */
+}
+
+.brand .mark svg {
+  width: 17px;
+  height: 17px;
+}
+
+.brand .name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 右侧功能组 ---------- */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;      /* ★ 推到最右，缺这行右侧不会靠右 */
+  min-width: 0;
+}
+
+.nav-right .pills {
+  min-width: 0;           /* 允许胶囊区窄屏收缩 + 内部横向滚动 */
+}
+
+/* ---------- 顶栏进度条 ---------- */
+.nav-progress {
+  position: absolute;
+  left: 0; bottom: -1px;
+  height: 2px;
+  width: 0;
+  z-index: 2;
+  background: linear-gradient(90deg, var(--accent), var(--accent-violet));
+  transition: width .08s linear;
+}
+
+/* ============================================================
+ * 四、主内容区
+ * ============================================================ */
+main {
+  position: relative;
+  padding-top: calc(var(--nav-h) + var(--sp-7));
+  padding-bottom: 120px;
+}
+
+.page-head {
+  margin-bottom: var(--sp-6);
+}
+
+/* ============================================================
+ * 五、返回顶部（骨架 —— 外观在 components.css）
+ * ============================================================ */
+.totop {
+  position: fixed;
+  right: 20px;
+  bottom: 32px;
+  z-index: 120;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translateY(14px) scale(.9);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-mid) var(--ease),
+    transform var(--dur-mid) var(--ease);
+}
+
+.totop.on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* 进度环容器 */
+.totop-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+/* 箭头 */
+.totop-arrow {
+  position: relative;
+  z-index: 1;
+  width: 17px;
+  height: 17px;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.totop:hover .totop-arrow {
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+ * 六、响应式
+ * ------------------------------------------------------------
+ * 这里只改尺寸/留白，不再涉及容器背景——
+ * 容器背景在第一节，两端共用。
+ * ============================================================ */
+@media (max-width: 860px) {
+  :root { --gutter: 18px; }
+
+  .nav-inner { gap: var(--sp-3); }
+
+  .brand .name { display: none; }   /* 小屏只留图标 */
+  .nav-right   { gap: var(--sp-2); }
+
+  .totop {
+    right: 16px;
+    bottom: 20px;
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 560px) {
+  :root { --gutter: 16px; }
+  main  { padding-bottom: 80px; }
+}
+
+/* ============================================================
+ * 七、降级
+ * ============================================================ */
+@media (prefers-reduced-transparency: reduce) {
+  .ambient,
+  .top-band { filter: none; }
+  .grid-bg  { display: none; }
+  .nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient span,
+  .nav-progress,
+  .totop-arrow {
+    transition: none !important;
+  }
+}
