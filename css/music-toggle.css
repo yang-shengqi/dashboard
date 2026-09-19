@@ -1,0 +1,27 @@
+/* ============================================================
+ * music-toggle.css —— 顶栏音乐开关
+ * ============================================================ */
+
+.music-btn {
+  position: relative;
+}
+
+/* ★ 音乐图标单独放大（默认 16px） */
+.music-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.music-btn .ico-play,
+.music-btn .ico-pause {
+  position: absolute;
+  transition: opacity .2s ease, transform .25s cubic-bezier(.22,1,.36,1);
+}
+
+.music-btn .ico-play  { opacity: 1; transform: scale(1); }
+.music-btn .ico-pause { opacity: 0; transform: scale(.6); }
+
+.music-btn.playing .ico-play  { opacity: 0; transform: scale(.6); }
+.music-btn.playing .ico-pause { opacity: 1; transform: scale(1); }
+
+.music-btn.playing { color: var(--accent); }
