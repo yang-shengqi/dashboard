@@ -1,0 +1,188 @@
+/* ============================================================
+ * income.css —— CRS 年度报税参考 · 模块专属样式
+ * ------------------------------------------------------------
+ * 表格视觉 100% 复用 dividends.css 的
+ *   .ds-year-body / .ds-header / .ds-item
+ *
+ * 本文件只保留 CRS 专属的：
+ *   1. 面板外框 / 年份标题
+ *   2. 账户组外壳（HSBC / BOCHK / Schwab）
+ *   3. Schwab 输入框
+ *   4. 数值占位符（★ 本版新增 .num-dash / .num-neg）
+ * ============================================================ */
+
+.income-panel {
+  padding: 20px 22px 22px;
+  margin-bottom: 28px;
+}
+
+.income-year-title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: .01em;
+}
+
+/* ============================================================
+ * 账户组外壳
+ * ============================================================ */
+.income-acc-group {
+  margin-bottom: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.income-acc-group:last-child { margin-bottom: 0; }
+
+.income-acc-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.income-acc-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.income-acc-name::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+  background: var(--text-faint);
+}
+.income-acc-group[data-acct="HSBC"]   .income-acc-name::before { background: var(--chart-2); }
+.income-acc-group[data-acct="BOCHK"]  .income-acc-name::before { background: var(--chart-3); }
+.income-acc-group[data-acct="Schwab"] .income-acc-name::before { background: var(--chart-1); }
+
+/* ============================================================
+ * 表格内容：作用域覆写 .ds-* 的列宽 / 对齐
+ *   ★ 第一列固定 14%，不参与 fr 分配 —— 输入框挤不动它
+ *   ★ min-width: 0 必须，否则 fr 会被 input 的固有宽度撑破
+ * ============================================================ */
+.income-acc-group .ds-header,
+.income-acc-group .ds-item {
+  grid-template-columns: 14% 1fr 1fr 1fr;
+}
+
+.income-acc-group .ds-header > *,
+.income-acc-group .ds-item   > * {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.income-acc-group .ds-header > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 数值列右对齐 */
+.income-acc-group .ds-header > span:nth-child(n+2),
+.income-acc-group .ds-item   > span:nth-child(n+2) {
+  text-align: right;
+}
+
+/* 数据行的 span：竖直居中 */
+.income-acc-group .ds-item > span {
+  display: inline-flex;
+  align-items: center;
+}
+.income-acc-group .ds-item > span:first-child {
+  justify-content: flex-start;
+}
+.income-acc-group .ds-item > span:nth-child(n+2) {
+  justify-content: flex-end;
+}
+
+/* ============================================================
+ * ★ 数值占位符（本版新增）
+ * ------------------------------------------------------------
+ * income.js 渲染时：
+ *   - 空值 → <span class="num-dash">—</span>
+ *   - 负差价 → <span class="num-neg">-xxx</span>
+ * ============================================================ */
+.income-acc-group .num-dash {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.income-acc-group .num-neg {
+  color: var(--state-fail);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+ * Schwab 输入框
+ * ============================================================ */
+.income-acc-group input.income-cell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 8px;
+  height: calc(var(--fs-sm) * 1.6);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: right;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  cursor: text;
+  transition: border-color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease),
+              box-shadow var(--dur-mid) var(--ease);
+}
+.income-acc-group input.income-cell::placeholder {
+  color: var(--text-faint);
+  opacity: .8;
+}
+.income-acc-group input.income-cell:hover {
+  border-style: solid;
+  border-color: var(--border-2);
+  background: var(--surface-3);
+}
+.income-acc-group input.income-cell:focus {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--focus-ring);
+}
+.income-acc-group input.income-cell::-webkit-outer-spin-button,
+.income-acc-group input.income-cell::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.income-acc-group input.income-cell[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ===== 只调本面板堆叠的透明度，不动全局 token ===== */
+
+/* ② HUANG / YANG 大块 —— 透明度减半 */
+.income-panel .ds-card {
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+}
+
+/* ③ HSBC / BOCHK / Schwab 小块 —— 透明度减半 */
+.income-panel .income-acc-group {
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+}
+
+/* ③ 的头部条 —— 再透一点 */
+.income-panel .income-acc-head {
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+}

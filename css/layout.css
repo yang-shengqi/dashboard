@@ -1,0 +1,352 @@
+/* ============================================================
+ * layout.css —— 页面骨架
+ * ------------------------------------------------------------
+ * 只管「位置 / 尺寸 / 层叠」，颜色外观一律去 components.css
+ *
+ * 断点（全站统一 5 档，本文件用到 860 / 640）：
+ *   1280 —— 大屏内容宽度（--max-w）
+ *   1024 —— 导航胶囊 → 三点菜单
+ *    860 —— 品牌文字隐藏、--gutter 18px
+ *    640 —— --gutter 16px、正文底部留白收窄
+ *    420 —— 超小屏微调
+ *
+ * 本版修改：
+ *   ★ 删除 1080px「第二组背景层」死代码（当前 HTML 只有一组背景层）
+ *   ★ main 的两个声明块合并为一
+ *   ★ 560px 断点归入 640px（统一 5 档）
+ *   ★ 新增 .skip-link 定位（外观在 components.css）
+ * ============================================================ */
+
+/* ============================================================
+ * 一、容器
+ * ============================================================ */
+.container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ============================================================
+ * 二、背景三层
+ * ============================================================ */
+.ambient,
+.grid-bg,
+.top-band {
+  position: fixed;
+  pointer-events: none;
+}
+
+.ambient {
+  inset: -240px;
+  z-index: -4;
+  filter: blur(90px);
+  transition: filter var(--dur-mid) var(--ease);
+}
+
+.ambient span {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(var(--c) / var(--glow-alpha)) 0%,
+    rgb(var(--c) / calc(var(--glow-alpha) * .45)) 38%,
+    rgb(var(--c) / calc(var(--glow-alpha) * .12)) 62%,
+    rgb(var(--c) / 0) 80%
+  );
+  transition: background var(--dur-slow) var(--ease);
+}
+
+/* ------------------------------------------------------------
+ * 光斑层 · 十颗
+ * 定位：top 负=上 / 正=下｜left 负=左 / 正=右｜right 负=靠右外侧
+ * 虚实：带 filter: blur() = 虚焦｜不带 = 实焦
+ * 尺寸大 = 近 / 尺寸小 = 远
+ * 圆形球：a1 ~ a5（宽高比接近 1）
+ * 横向肌理带：a6 ~ a10（高度很小，拉长的扁椭圆）
+ * ------------------------------------------------------------ */
+
+/* --- 1 · 顶部偏左 · 竖长紫球 · 微虚 --- */
+.ambient .a1 { --c: var(--rgb-violet); width: 1000px; height: 1200px; top: -400px; left: 280px; filter: blur(10px); }
+
+/* --- 2 · 右上角（大半在屏幕外）· 超大橙球 · 实焦 --- */
+.ambient .a2 { --c: var(--rgb-orange); width: 1800px; height: 1800px; top: -780px; right: -620px; }
+
+/* --- 3 · 左侧偏下 · 超大绿球 · 实焦 --- */
+.ambient .a3 { --c: var(--rgb-green); width: 1800px; height: 1800px; top: 680px; left: -780px; }
+
+/* --- 4 · 右侧下部 · 超大蓝球 · 强虚 --- */
+.ambient .a4 { --c: var(--rgb-blue); width: 1600px; height: 1600px; top: 1180px; right: -320px; filter: blur(100px); }
+
+/* --- 5 · 右侧下部 · 超大蓝球 · 微虚 --- */
+.ambient .a5 { --c: var(--rgb-blue); width: 1800px; height: 1600px; top: 1080px; right: -600px; filter: blur(10px); }
+
+/* --- 6 · 中下偏右 · 横向蓝带（厚）· 强虚 --- */
+.ambient .a6 { --c: var(--rgb-blue); width: 1200px; height: 200px; top: 1380px; right: -200px; filter: blur(100px); }
+
+/* --- 7 · 右侧中部 · 横向橙带（中）· 虚 --- */
+.ambient .a7 { --c: var(--rgb-orange); width: 1400px; height: 90px; top: 900px; right: -480px; filter: blur(80px); }
+
+/* --- 8 · 中上偏左 · 横向蓝带（薄）· 虚 --- */
+.ambient .a8 { --c: var(--rgb-blue); width: 1200px; height: 60px; top: 680px; left: 200px; filter: blur(60px); }
+
+/* --- 9 · 左下 · 横向绿带（薄）· 虚 --- */
+.ambient .a9 { --c: var(--rgb-green); width: 800px; height: 60px; top: 1480px; left: -180px; filter: blur(60px); }
+
+/* --- 10 · 中部偏左 · 横向绿带（极细）· 虚 --- */
+.ambient .a10 { --c: var(--rgb-green); width: 900px; height: 30px; top: 1180px; left: 180px; filter: blur(60px); }
+
+.grid-bg {
+  inset: 0;
+  z-index: -3;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0, #000 94%, transparent 100%);
+  mask-image: linear-gradient(to bottom,
+    #000 0, #000 94%, transparent 100%);
+  transition: background-image var(--dur-mid) var(--ease);
+}
+
+.top-band {
+  top: 0; left: 0; right: 0;
+  height: 280px;
+  z-index: -2;
+  filter: blur(36px);
+  background:
+    radial-gradient(58% 150% at  12% -10%, var(--band-blue)   0%, transparent 68%),
+    radial-gradient(52% 150% at  68% -10%, var(--band-orange) 0%, transparent 68%),
+    radial-gradient(46% 150% at 102% -10%, var(--band-green)  0%, transparent 68%);
+  transition: background var(--dur-slow) var(--ease);
+}
+
+/* ============================================================
+ * 三、顶栏骨架
+ * ============================================================ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: var(--nav-h);
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-bd);
+  backdrop-filter: blur(22px) saturate(190%);
+  -webkit-backdrop-filter: blur(22px) saturate(190%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+  transition:
+    background var(--dur-mid) var(--ease),
+    border-color var(--dur-mid) var(--ease);
+}
+
+/* 顶栏彩色渐变层（换肤自动变） */
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(44% 220% at  6% 30%,   /* ← 左：蓝 */
+      rgb(var(--rgb-blue)   / var(--nav-tint-a)), transparent 72%),
+    radial-gradient(40% 220% at 54% 30%,   /* ← 中：橙 */
+      rgb(var(--rgb-orange) / var(--nav-tint-b)), transparent 72%),
+    radial-gradient(38% 220% at 98% 30%,   /* ← 右：绿 */
+      rgb(var(--rgb-green)  / var(--nav-tint-c)), transparent 72%);
+  transition: background var(--dur-slow) var(--ease);
+}
+
+.nav-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* ---------- 品牌区 ---------- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand .mark {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  /* 外观（渐变底 / 阴影）在 components.css */
+}
+
+.brand .mark svg {
+  width: 17px;
+  height: 17px;
+}
+
+.brand .name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 右侧功能组 ---------- */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;      /* 推到最右 */
+  min-width: 0;
+}
+
+.nav-right .pills {
+  min-width: 0;           /* 允许胶囊区窄屏收缩 + 内部横向滚动 */
+}
+
+/* ---------- 顶栏进度条 ---------- */
+.nav-progress {
+  position: absolute;
+  left: 0; bottom: -1px;
+  height: 2px;
+  width: 0;
+  z-index: 2;
+  background: linear-gradient(90deg, var(--accent), var(--accent-violet));
+  transition: width .08s linear;
+}
+
+/* ============================================================
+ * 四、主内容区
+ * ------------------------------------------------------------
+ * main 承载「主内容容器统一底」—— 底色来自 --container-bg。
+ * 用 main 而不是 .container，是为了精确命中主内容区，
+ * 避开顶栏里的 <div class="container nav-inner">。
+ * ============================================================ */
+main {
+  position: relative;
+  background: var(--container-bg);
+  padding-top: calc(var(--nav-h) + var(--sp-7));
+  padding-bottom: 120px;
+}
+
+.page-head {
+  margin-bottom: var(--sp-6);
+}
+
+/* ============================================================
+ * 五、跳转链接（★ 新增）
+ * ------------------------------------------------------------
+ * 键盘用户按 Tab 第一个到达的元素，回车跳到主内容。
+ * 外观（背景 / 圆角 / 内边距）在 components.css，
+ * 这里只管「位置」与「平时移出视口 / 聚焦时出现」。
+ * ============================================================ */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  transform: translateY(-200%);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ============================================================
+ * 六、返回顶部（骨架 —— 外观在 components.css）
+ * ============================================================ */
+.totop {
+  position: fixed;
+  right: 20px;
+  bottom: 32px;
+  z-index: 120;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translateY(14px) scale(.9);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-mid) var(--ease),
+    transform var(--dur-mid) var(--ease);
+}
+
+.totop.on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* 进度环容器 */
+.totop-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+/* 箭头 */
+.totop-arrow {
+  position: relative;
+  z-index: 1;
+  width: 17px;
+  height: 17px;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.totop:hover .totop-arrow {
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+ * 七、响应式
+ * ------------------------------------------------------------
+ * 只用 860 / 640 两档（全站 5 档里的两档）。
+ * 这里只改尺寸 / 留白，不再涉及容器背景 —— 容器背景在第四节。
+ * ============================================================ */
+@media (max-width: 860px) {
+  :root { --gutter: 18px; }
+
+  .nav-inner { gap: var(--sp-3); }
+
+  .brand .name { display: none; }   /* 小屏只留图标 */
+  .nav-right   { gap: var(--sp-2); }
+
+  .totop {
+    right: 16px;
+    bottom: 20px;
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root { --gutter: 16px; }
+  main  { padding-bottom: 80px; }
+}
+
+/* ============================================================
+ * 八、降级
+ * ============================================================ */
+@media (prefers-reduced-transparency: reduce) {
+  .ambient,
+  .top-band { filter: none; }
+  .grid-bg  { display: none; }
+  .nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface-solid);
+  }
+}
