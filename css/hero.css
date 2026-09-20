@@ -1,20 +1,14 @@
 /* ============================================================
- * hero.css —— 首屏核心逻辑横幅（无卡片版 · 与其他 section 一致）
+ * hero.css —— 首屏核心逻辑横幅
  * ------------------------------------------------------------
- * 结构：
- *   hero 标题 / 描述 / chips / 强调尾句 → 全部直接展开（无玻璃卡）
- *   只有「内容块」才带玻璃底：region-grid / split-card / card
- *
- * 本版修改：
- *   ★ font-weight 620/650 → 600/700（非标准字重，除可变字体外会回退）
- *   ★ 注释 220% → 200%（与实际 @keyframes 终点一致）
+ * 本版：删掉了末尾的 @media (prefers-reduced-motion: reduce) 降级段，
+ *       让标题流光 / 标题粒子 / 绿点呼吸在系统开着"减弱动态效果"时也照常跑。
  * ============================================================ */
 
 .hero {
   padding: 8px 0 30px;
 }
 
-/* 无卡片、无内边距、无背景 —— 直接展开 */
 .hero__panel {
   position: relative;
 }
@@ -65,14 +59,10 @@
   margin: 0 0 24px;
   max-width: 22ch;
   color: var(--text);
-  position: relative;   /* 给标题粒子做定位参考 */
+  position: relative;
 }
 
-/* ---------- 流光渐变（首尾同色 · 无缝循环） ----------
- * 左右两端都是 var(--accent)，循环点两侧颜色一致，
- * 视觉上看不到接缝。
- * background-size 与 @keyframes 终点必须一致（都是 200%）。
- */
+/* ---------- 流光渐变（首尾同色 · 无缝循环） ---------- */
 .hero h1 em {
   font-style: normal;
   background: linear-gradient(105deg,
@@ -171,10 +161,7 @@
   .hero__tail { padding: 14px 16px; }
 }
 
-/* ═══════════ 标题粒子 ═══════════
- * 由 js/main.js 动态注入 40 个 <span class="h1-dust">，
- * 每个粒子的 --pc 由 JS 随机挑 --accent / --accent-2 / --accent-violet。
- */
+/* ═══════════ 标题粒子 ═══════════ */
 .hero h1 > .h1-dust {
   position: absolute;
   border-radius: 50%;
@@ -192,13 +179,4 @@
   18%  { opacity: .85; }
   78%  { opacity: .6; }
   100% { transform: translate(22px, -72px) scale(1.15); opacity: 0; }
-}
-
-/* ---------- 粒子动画降级 ---------- */
-@media (prefers-reduced-motion: reduce) {
-  .tagx i,
-  .hero h1 em,
-  .hero h1 > .h1-dust {
-    animation: none !important;
-  }
 }
