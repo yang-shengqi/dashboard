@@ -1,0 +1,66 @@
+/* ============================================================
+ * chart-compare.css —— 双柱对比
+ * ------------------------------------------------------------
+ * 本版修改：无（断点已符合标准）
+ * ============================================================ */
+
+.compare-panel {
+  padding: 20px 22px 22px;
+  margin-bottom: 28px;
+}
+
+/* 面板头：左图例 / 右月度对比 */
+.compare-panel .panel-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.compare-wrap {
+  position: relative;
+  height: 320px;
+}
+
+.compare-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ---------- HTML 图例（左） ---------- */
+.compare-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--chart-text, var(--text-2));
+  flex-wrap: wrap;
+}
+
+.compare-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.compare-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---------- 右侧 meta（月度对比） ---------- */
+.compare-panel .panel-head .meta {
+  margin-left: auto;      /* 推到最右 */
+}
+
+@media (max-width: 640px) {
+  .compare-wrap { height: 240px; }
+  .compare-panel .panel-head { gap: 8px; }
+  .compare-legend { gap: 10px; }
+}

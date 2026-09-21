@@ -1,0 +1,63 @@
+/* ============================================================
+ * asset-overview.css —— 配置占比（中心对称条形）
+ * ------------------------------------------------------------
+ * 本版修改：
+ *   ★ 确认为 .ao-* 的唯一来源
+ *     （原 panels.css 末尾有重复定义且属性冲突，已删除）
+ *   ★ 其余保持原样
+ * ============================================================ */
+
+.ao-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.ao-label {
+  width: 50px;
+  flex-shrink: 0;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.ao-bar {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  background: var(--surface-3);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  min-width: 60px;
+}
+
+/* 中线 */
+.ao-mid {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--border-strong);
+  z-index: 2;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.ao-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: var(--r-sm);
+  transition: width var(--dur-mid) var(--ease);
+}
+
+.ao-val {
+  width: 70px;
+  text-align: right;
+  color: var(--text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
