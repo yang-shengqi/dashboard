@@ -1,0 +1,66 @@
+/* ============================================================
+ * rebalance.css —— HSBC 基金最低起投 / 再平衡建议
+ * ------------------------------------------------------------
+ * 本版修改：
+ *   ★ 新增 .muted（rebalance.js 在「未设定最低起投」时输出）
+ *   ★ 其余保持：本表复用 hk-holdings.css 的 .hk-holdings-panel
+ *     只写「本表独有的覆写」
+ * ============================================================ */
+
+/* 1. 本表内容固定 10 行，解掉 hk-holdings 的 380px 定高 */
+.reb-panel .table-scroll {
+  height: auto;
+  max-height: none;
+}
+
+/* 1.5 换算港元列 —— 覆写 hk-holdings.css 对「第 3 列居中」的规则
+        （那条是给基金表「币种」列用的；再平衡表第 3 列是换算港元，
+          需与数据一样右对齐）
+        用 .reb-panel thead th.num:nth-child(3) 提高优先级，
+        不依赖两个 CSS 文件的加载顺序。 */
+.reb-panel thead th.num:nth-child(3) {
+  text-align: right;
+}
+
+/* 2. 状态列 —— 表头 + 数据都右对齐，三色 */
+.reb-panel .col-status {
+  text-align: right;
+  font-weight: 600;
+  font-size: 12px;
+}
+.reb-panel .col-status.ok    { color: var(--state-ok);   }
+.reb-panel .col-status.over  { color: var(--state-fail); }
+.reb-panel .col-status.under { color: var(--state-warn); }
+
+/* 3. 建议列 —— HUANG / YANG */
+.reb-panel .col-advice {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.reb-panel .col-advice.buy  { color: var(--state-ok); font-weight: 600; }
+.reb-panel .col-advice.dash { color: var(--text-3);   font-weight: 400; }
+
+/* ★ 4. 弱化文字（本版新增）
+      rebalance.js 在「最低起投未设定」时渲染
+      <span class="muted">未设定</span>，之前无样式。 */
+.reb-panel .muted {
+  color: var(--text-3);
+}
+
+/* 5. 底部说明 */
+.reb-note {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.6;
+}
+
+/* ============================================================
+ * 响应式
+ * ------------------------------------------------------------
+ * 与 hk-holdings.css 一致：不写任何覆盖。
+ * 窄屏保持与桌面端相同的列宽、字号、内边距，
+ * 仅由 .table-scroll 的 overflow-x: auto 提供横向滚动。
+ * ============================================================ */

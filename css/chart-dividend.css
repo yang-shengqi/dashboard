@@ -1,0 +1,32 @@
+/* ============================================================
+ * chart-dividend.css —— 年度分红柱状
+ * ------------------------------------------------------------
+ * 本版修改：无（断点已符合标准）
+ * ============================================================ */
+
+.dividend-panel {
+  padding: 20px 22px 22px;
+  margin-bottom: 28px;
+}
+
+.dividend-panel .panel-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+  min-height: 20px;
+}
+
+.dividend-wrap {
+  position: relative;
+  height: 340px;
+}
+
+.dividend-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .dividend-wrap { height: 240px; }
+}
