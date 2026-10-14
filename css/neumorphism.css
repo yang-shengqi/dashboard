@@ -1,9 +1,9 @@
 /* ============================================================
  * Neumorphism · 经济数据趋势 + 真实性检验
- * v5.2
+ * v5.3.1
  * ============================================================ */
 :root{
-  --bg:#e0e5ec; --bg-2:#f0f0f3;
+  --bg:#e0e5ec;
   --shadow-dark:#b8bcc2; --shadow-light:#ffffff;
   --accent:#6d5dfc; --accent-soft:rgba(109,93,252,.14);
   --text:#333333; --text-2:#6b7280; --text-3:#9aa3b5;
@@ -28,8 +28,8 @@
          "Noto Sans SC","Source Han Sans SC",sans-serif;
 }
 
-/* ============ 涨跌方向色（供 deltaClass 使用）· 新增 ============ */
-/* 语义：up = 朝好的方向变（绿），dn = 朝坏的方向变（红），fl = 中性/无数据（灰） */
+/* ============ 涨跌方向色（供 deltaClass 使用） ============ */
+/* up = 朝好的方向变（绿），dn = 朝坏的方向变（红），fl = 中性/无数据（灰） */
 .up{color:var(--ok);}
 .dn{color:var(--fail);}
 .fl{color:var(--text-3);}
@@ -98,7 +98,7 @@ section{padding:32px 0;scroll-margin-top:92px;}
 .section-label .hint{font-size:12px;color:var(--text-3);margin-left:auto;}
 
 /* ============ 卡片 ============ */
-.card,.panel,.chart-card,.advice{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-out);}
+.card,.panel,.chart-card{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-out);}
 .card{padding:26px 30px;}
 
 /* ============ 输入 ============ */
@@ -149,11 +149,33 @@ tbody td:first-child{text-align:left;}
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:var(--accent-soft);}
 td.na{color:var(--text-3);}
-.year-tabs{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;padding:6px 0;}
+
+/* 年份分页 */
+.year-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  padding:10px 0;
+}
 .year-tab{border:none;background:transparent;color:var(--text-2);font-size:12px;padding:8px 15px;border-radius:var(--r-full);
   cursor:pointer;transition:box-shadow var(--t),color var(--t);}
 .year-tab:hover{color:var(--text);}
 .year-tab.active{color:var(--accent);font-weight:600;background:var(--bg);box-shadow:var(--sh-out-xs);}
+.year-nav-btn{
+  width:32px;
+  height:32px;
+  padding:0 !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  font-weight:700;
+  line-height:1;
+  flex-shrink:0;
+}
+.year-nav-btn:disabled{ opacity:.3; cursor:not-allowed; }
 
 /* ============ 趋势网格 ============ */
 .chart-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;}
@@ -167,13 +189,9 @@ td.na{color:var(--text-3);}
   font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0;}
 .chart-card svg{width:100%;height:auto;display:block;overflow:visible;}
 .chart-card.is-hovering{box-shadow:var(--sh-out-sm);}
-.chart-empty{grid-column:1/-1;text-align:center;color:var(--text-3);font-size:13px;line-height:1.7;
-  padding:36px 20px;border-radius:var(--r-lg);background:var(--bg);box-shadow:var(--sh-in-sm);}
 
 /* ============ 大图 ============ */
 .big{background:var(--bg);border-radius:var(--r);box-shadow:var(--sh-out);padding:18px 22px;margin-bottom:16px;}
-.big .bt{font-size:14px;font-weight:600;display:inline;margin-right:10px;}
-.big .bs{font-size:11.5px;color:var(--text-3);display:inline;line-height:1.6;}
 .big svg{display:block;margin-top:12px;}
 
 /* ============ 检测卡 ============ */
@@ -244,8 +262,6 @@ td.na{color:var(--text-3);}
 .note{margin-top:10px;padding:10px 14px;border-radius:var(--r-sm);box-shadow:var(--sh-in-xs);
   font-size:11.5px;line-height:1.65;}
 .grid3{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch;}
-.grid-2-1{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch;}
-.grid-2-1 > .panel:nth-child(3){grid-column:1/-1;}
 
 /* ============ 权重条 / 进度条 ============ */
 .wt{display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:8px;}
@@ -442,7 +458,7 @@ td.na{color:var(--text-3);}
 }
 
 /* ============================================================
- * 03 数据总览（v5.2 分格卡片）
+ * 03 数据总览（分格卡片）
  * ============================================================ */
 
 /* 通用：凹陷描述 */
@@ -488,8 +504,6 @@ td.na{color:var(--text-3);}
 .ov-cell-gauge .cg-val .n{font-size:30px;font-weight:700;line-height:1;
   font-variant-numeric:tabular-nums;}
 .ov-cell-gauge .cg-val .l{font-size:11px;color:var(--text-3);margin-top:5px;}
-.ov-cell-gauge .cg-val .s{font-size:12px;color:var(--text-2);margin-top:3px;
-  font-variant-numeric:tabular-nums;}
 
 /* 卡片内的半圆（1×4 用） */
 .ov-cell-half{
@@ -498,18 +512,6 @@ td.na{color:var(--text-3);}
 .ov-cell-half svg{width:100%;display:block;}
 .ov-cell-half .vl{position:absolute;left:0;right:0;bottom:4px;text-align:center;
   font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
-
-/* 第一行左卡的分数（大字，配环） */
-.ov-cell-score-big{
-  text-align:center;font-size:13px;font-weight:600;color:var(--text-2);
-  margin-top:8px;
-}
-
-/* 四维总标题 */
-.ov-subtitle{
-  font-size:13.5px;font-weight:600;color:var(--text);
-  margin:0 0 12px 4px;
-}
 
 /* 灰色裸文字说明（无容器） */
 .ov-bare-note{
@@ -539,20 +541,6 @@ td.na{color:var(--text-3);}
   font-variant-numeric:tabular-nums;
 }
 
-/* 三色风险环 */
-.ov-tri-gauge{
-  position:relative;width:130px;height:130px;flex-shrink:0;
-}
-.ov-tri-gauge svg{width:100%;height:100%;display:block;}
-/* 三段弧统一线宽、圆头 */
-.ov-tri-gauge .seg-arc{
-  fill:none;stroke-width:11;stroke-linecap:butt;
-}
-/* 65 的标记点 */
-.ov-tri-gauge .marker{
-  stroke:var(--bg);stroke-width:3;
-}
-
 /* 左卡：环 + 右侧文字 */
 .ov-risk-left{
   display:flex;align-items:center;justify-content:center;gap:24px;
@@ -568,29 +556,7 @@ td.na{color:var(--text-3);}
   font-size:14px;font-weight:700;line-height:1.5;
 }
 
-/* 年份分页：防错位 */
-.year-tabs{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  padding:10px 0;
-}
-.year-nav-btn{
-  width:32px;
-  height:32px;
-  padding:0 !important;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:16px;
-  font-weight:700;
-  line-height:1;
-  flex-shrink:0;
-}
-.year-nav-btn:disabled{ opacity:.3; cursor:not-allowed; }
-
+/* ============ 图例 ============ */
 .chart-legend{
   display:flex;
   align-items:center;
