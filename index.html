@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>杨氏家族全天候永久投资组合</title>
+  <style>
+    @charset "UTF-8";
+
+    :root {
+      --font-sans:
+        ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial,
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --font-mono:
+        ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-synthesis-weight: none;
+      font-optical-sizing: auto;
+    }
+
+    @property --hue { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --rotate { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --bg-y { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --bg-x { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --glow-translate-y { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --bg-size { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --glow-opacity { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --glow-blur { syntax: "<number>"; inherits: true; initial-value: 0; }
+    @property --glow-scale { syntax: "<number>"; inherits: true; initial-value: 2; }
+    @property --glow-radius { syntax: "<number>"; inherits: true; initial-value: 2; }
+    @property --white-shadow { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+    :root {
+      --debug: 0;
+      --supported: 0;
+      --not-supported: 0;
+      --card-color: hsl(260deg 100% 3%);
+      --text-color: hsl(260deg 10% 55%);
+      --card-radius: 3.6vw;
+      --card-width: 40vw;
+      --border-width: 3px;
+      --bg-size: 1;
+      --hue: 0;
+      --hue-speed: 1;
+      --rotate: 0;
+      --animation-speed: 4s;
+      --interaction-speed: 0.55s;
+      --glow-scale: 1.5;
+      --scale-factor: 1;
+      --glow-blur: 6;
+      --glow-opacity: 1;
+      --glow-radius: 100;
+      --glow-rotate-unit: 1deg;
+    }
+
+    body::before, body::after {
+      content: "CSS.registerProperty is supported ✅";
+      position: absolute; display: block; top: 8px; left: 0; right: 0; margin: auto;
+      width: calc(100% - 160px); max-width: 380px; height: auto; padding: 8px;
+      border-radius: 8px; background: #48b93c; color: white; text-align: center;
+      font-family: sans-serif; z-index: var(--supported, 0); opacity: var(--supported, 0);
+    }
+    body::after {
+      content: "CSS.registerProperty is NOT supported ❌";
+      background: #b93c3c; z-index: var(--not-supported, 0); opacity: var(--not-supported, 0);
+    }
+    body::before, body::after { display: none !important; }
+
+    html, body {
+      height: 100%; width: 100%; padding: 0; margin: 0;
+    }
+
+    *, *:before, *:after {
+      outline: calc(var(--debug) * 1px) red dashed;
+    }
+
+    body {
+      background-color: var(--card-color);
+      display: flex; align-items: center; justify-content: center;
+      font-family: "Mona Sans", sans-serif;
+    }
+
+    body > div {
+      width: var(--card-width);
+      aspect-ratio: 1.5/1;
+      color: white;
+      margin: auto;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; z-index: 2;
+      border-radius: var(--card-radius);
+      cursor: pointer;
+    }
+    body > div:hover > div {
+      mix-blend-mode: darken;
+      --text-color: white;
+      box-shadow: 0 0 calc(var(--white-shadow) * 1vw) calc(var(--white-shadow) * 0.15vw) rgba(255,255,255,0.2);
+      animation: shadow-pulse calc(var(--animation-speed) * 2) linear infinite;
+    }
+    body > div:hover > div:before {
+      --bg-size: 15;
+      animation-play-state: paused;
+      transition: --bg-size var(--interaction-speed) ease;
+    }
+    body > div:hover .glow {
+      --glow-blur: 1.5; --glow-opacity: 0.6; --glow-scale: 2.5;
+      --glow-radius: 0; --rotate: 900; --glow-rotate-unit: 0;
+      --scale-factor: 1.25;
+      animation-play-state: paused;
+    }
+    body > div:hover .glow:after {
+      --glow-translate-y: 0;
+      animation-play-state: paused;
+      transition: --glow-translate-y 0s ease, --glow-blur 0.05s ease,
+                  --glow-opacity 0.05s ease, --glow-scale 0.05s ease, --glow-radius 0.05s ease;
+    }
+    body > div:before, body > div:after {
+      content: ""; display: block; position: absolute;
+      width: 100%; height: 100%; border-radius: var(--card-radius);
+    }
+    body > div > div {
+      position: absolute; width: 100%; height: 100%;
+      background: var(--card-color);
+      border-radius: calc(calc(var(--card-radius) * 0.9));
+      display: flex; flex-direction: column; gap: 0.6em;
+      align-items: center; justify-content: center;
+      font-weight: 800; text-transform: uppercase; font-stretch: 150%;
+      font-size: 18px;
+      font-size: clamp(1.5vw, 1.5vmin, 32px);
+      color: var(--text-color);
+      padding: calc(var(--card-width) / 8);
+    }
+    body > div > div span {
+      display: inline-block; padding: 0.25em; border-radius: 4px;
+      background: var(--text-color); color: black; margin-right: 0.5em; font-weight: 900;
+    }
+    body > div > div:before {
+      content: ""; display: block; position: absolute;
+      width: 100%; height: 100%;
+      border-radius: calc(calc(var(--card-radius) * 0.9));
+      box-shadow: 0 0 20px black; mix-blend-mode: color-burn; z-index: -1;
+      background: #292929 radial-gradient(30% 30% at calc(var(--bg-x) * 1%) calc(var(--bg-y) * 1%),
+        hsl(calc(calc(var(--hue) * var(--hue-speed)) * 1deg), 100%, 90%) calc(0% * var(--bg-size)),
+        hsl(calc(calc(var(--hue) * var(--hue-speed)) * 1deg), 100%, 80%) calc(20% * var(--bg-size)),
+        hsl(calc(calc(var(--hue) * var(--hue-speed)) * 1deg), 100%, 60%) calc(40% * var(--bg-size)),
+        transparent 100%);
+      width: calc(100% + var(--border-width));
+      height: calc(100% + var(--border-width));
+      animation: hue-animation var(--animation-speed) linear infinite,
+                 rotate-bg var(--animation-speed) linear infinite;
+      transition: --bg-size var(--interaction-speed) ease;
+    }
+    body > div .glow {
+      --glow-translate-y: 0; display: block; position: absolute;
+      width: calc(var(--card-width) / 5); height: calc(var(--card-width) / 5);
+      animation: rotate var(--animation-speed) linear infinite;
+      transform: rotateZ(calc(var(--rotate) * var(--glow-rotate-unit)));
+      transform-origin: center;
+      border-radius: calc(var(--glow-radius) * 10vw);
+    }
+    body > div .glow:after {
+      content: ""; display: block; z-index: -2;
+      filter: blur(calc(var(--glow-blur) * 10px));
+      width: 130%; height: 130%; left: -15%; top: -15%;
+      background: hsl(calc(calc(var(--hue) * var(--hue-speed)) * 1deg), 100%, 60%);
+      position: relative;
+      border-radius: calc(var(--glow-radius) * 10vw);
+      animation: hue-animation var(--animation-speed) linear infinite;
+      transform: scaleY(calc(var(--glow-scale) * var(--scale-factor) / 1.1))
+                 scaleX(calc(var(--glow-scale) * var(--scale-factor) * 1.2))
+                 translateY(calc(var(--glow-translate-y) * 1%));
+      opacity: var(--glow-opacity);
+    }
+
+    @keyframes shadow-pulse {
+      0%, 24%, 46%, 73%, 96% { --white-shadow: 0.5; }
+      12%, 28%, 41%, 63%, 75%, 82%, 98% { --white-shadow: 2.5; }
+      6%, 32%, 57% { --white-shadow: 1.3; }
+      18%, 52%, 88% { --white-shadow: 3.5; }
+    }
+    @keyframes rotate-bg {
+      0% { --bg-x: 0; --bg-y: 0; }
+      25% { --bg-x: 100; --bg-y: 0; }
+      50% { --bg-x: 100; --bg-y: 100; }
+      75% { --bg-x: 0; --bg-y: 100; }
+      100% { --bg-x: 0; --bg-y: 0; }
+    }
+    @keyframes rotate {
+      from { --rotate: -70; --glow-translate-y: -65; }
+      25% { --glow-translate-y: -65; }
+      50% { --glow-translate-y: -65; }
+      60%, 75% { --glow-translate-y: -65; }
+      85% { --glow-translate-y: -65; }
+      to { --rotate: calc(360 - 70); --glow-translate-y: -65; }
+    }
+    @keyframes hue-animation {
+      0% { --hue: 0; }
+      100% { --hue: 360; }
+    }
+
+    body > div > div .card-title {
+      display: flex; align-items: center;
+    }
+    body > div > div .card-divider {
+      width: 90%; height: 1px; margin: 0; border: 0;
+      background: linear-gradient(90deg, transparent, currentColor, transparent);
+      opacity: 0.6;
+    }
+    body > div > div .card-subtitle {
+      margin: 0;
+      font-size: 0.55em;
+      font-weight: 400;
+      font-stretch: normal;
+      letter-spacing: 1em;      /* 中文：一个字一格 */
+      padding-left: 1em;
+      text-transform: none;
+      opacity: 0.7;
+    }
+
+    /* ===== 卡片内部：字幕弹出模糊特效 ===== */
+    #datouwang {
+      position: relative; display: grid; width: 100%;
+      margin-top: 5.8em; text-align: center;
+      font-family: 'Oswald', var(--font-sans);
+      font-weight: 700; font-stretch: normal; text-transform: none;
+      letter-spacing: normal; line-height: 1.4; color: inherit;
+    }
+    #datouwang > div {
+      grid-area: 1 / 1;
+      font-size: 0.65em;
+      opacity: 0;
+      animation: rotate-word 20s linear infinite both;
+    }
+    #datouwang > div span {
+      display: block; padding: 0; margin: 1em 0 0; border-radius: 0;
+      background: none; color: inherit; font-weight: 400;
+      font-size: 0.85em; text-transform: none; opacity: 0.75;
+      font-family: 'Rubik', var(--font-sans);
+    }
+    @keyframes rotate-word {
+      0%   { opacity: 0; filter: blur(10px); transform: scale(1.12); }
+      3%   { opacity: 1; filter: blur(0px);  transform: scale(1); }
+      17%  { opacity: 1; filter: blur(0px);  transform: scale(1); }
+      21%  { opacity: 0; filter: blur(10px); transform: scale(1.12); }
+      100% { opacity: 0; filter: blur(10px); transform: scale(1.12); }
+    }
+
+    body > div > .card-link {
+      position: absolute; inset: 0; z-index: 5;
+      border-radius: var(--card-radius); text-decoration: none;
+    }
+
+    #datouwang > div:nth-child(1) { animation-delay: 0s;  }
+    #datouwang > div:nth-child(2) { animation-delay: 4s;  }
+    #datouwang > div:nth-child(3) { animation-delay: 8s;  }
+    #datouwang > div:nth-child(4) { animation-delay: 12s; }
+    #datouwang > div:nth-child(5) { animation-delay: 16s; }
+
+    /* ===== 粒子消散特效 ===== */
+    #fx {
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    body > div.dissolving {
+      animation: card-dissolve 0.9s cubic-bezier(.3, .0, .5, 1) forwards;
+      pointer-events: none;
+    }
+    @keyframes card-dissolve {
+      0%   { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.06); }
+    }
+
+    /* 1440px 及以上：卡片最大宽度限制为 560px */
+    @media (min-width: 1440px) {
+      :root {
+        --card-width: 560px;
+        --card-radius: 50.4px;
+      }
+      body > div > div {
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div role="button">
+    <span class="glow"></span>
+
+    <a class="card-link"
+       href="practical-playbook.html"
+       aria-label="杨氏家族全天候永久投资组合"></a>
+
+    <div>
+      <div class="card-title"><span>HOME</span>Yang Shengqi's</div>
+
+      <!-- 变动文字 -->
+      <div id="datouwang">
+        <div>本方案适用于<br><span>地球上任何一个国家、任何一个人。</span></div>
+        <div>核心逻辑<br><span>全球化、分散化、多币种化、去中心化的资产拓扑结构，是唯一分摊风险的策略。</span></div>
+        <div>单一法币 + 单一市场 + 单一配置<br><span>构成一个三元共振的脆弱系统。</span></div>
+        <div>损失不是三项相加，而是“三项相乘”。<br><span>当危机来临，汇率贬值、市场崩盘、资产缩值往往不是先后发生，而是同时爆发并相互强化。</span></div>
+        <div>本方案不是“中国解决方案”，也不是“香港解决方案”。<br><span>这是一个人类级别的“法币风险对冲协议”，它的本质就是要求不输。</span></div>
+      </div>
+
+      <!-- 横线 + 副标题 -->
+      <hr class="card-divider">
+      <p class="card-subtitle">杨氏家族全天候永久投资组合</p>
+    </div>
+  </div>
+
+  <!-- 粒子画布 -->
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var link   = document.querySelector('.card-link');
+      var card   = document.querySelector('body > div');
+      var canvas = document.getElementById('fx');
+      var ctx    = canvas.getContext('2d');
+
+      if (!link || !card || !canvas) return;
+
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      function resize() {
+        canvas.width  = window.innerWidth  * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width  = window.innerWidth  + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function burst(href) {
+        var rect = card.getBoundingClientRect();
+        var cx = rect.left + rect.width  / 2;
+        var cy = rect.top  + rect.height / 2;
+
+        var count = Math.min(700, Math.max(260, Math.round(rect.width * rect.height / 900)));
+
+        var particles = [];
+        for (var i = 0; i < count; i++) {
+          var x = rect.left + Math.random() * rect.width;
+          var y = rect.top  + Math.random() * rect.height;
+
+          var dx = x - cx;
+          var dy = y - cy;
+          var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          var speed = 1.5 + Math.random() * 7;
+
+          particles.push({
+            x: x,
+            y: y,
+            vx: (dx / dist) * speed + (Math.random() - 0.5) * 4.5,
+            vy: (dy / dist) * speed + (Math.random() - 0.5) * 4.5,
+            size: 0.8 + Math.random() * 2.6,
+            alpha: 0.85 + Math.random() * 0.15,
+            decay: 0.006 + Math.random() * 0.018,
+            hue: 140 + Math.random() * 80
+          });
+        }
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.globalCompositeOperation = 'lighter';
+
+        var rafId;
+        var startTime = performance.now();
+        var MAX_MS = 2200;
+
+        function frame(now) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          var alive = 0;
+          for (var i = 0; i < particles.length; i++) {
+            var p = particles[i];
+            if (p.alpha <= 0) continue;
+            alive++;
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vx *= 0.985;
+            p.vy *= 0.985;
+            p.vy += 0.06;
+            p.alpha -= p.decay;
+            if (p.alpha < 0) p.alpha = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = 'hsla(' + p.hue + ', 92%, 64%, ' + p.alpha + ')';
+            ctx.fill();
+          }
+
+          if (alive > 0 && (now - startTime) < MAX_MS) {
+            rafId = requestAnimationFrame(frame);
+          } else {
+            cancelAnimationFrame(rafId);
+            window.location.href = href;
+          }
+        }
+
+        rafId = requestAnimationFrame(frame);
+      }
+
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        var href = link.getAttribute('href');
+
+        card.classList.add('dissolving');
+        burst(href);
+      });
+    });
+  </script>
+
+</body>
+</html>
