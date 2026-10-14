@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>杨氏家族全天候永久投资组合</title>
+  <title>Yang Family All-Weather Permanent Portfolio</title>
   <style>
     @charset "UTF-8";
 
@@ -123,7 +123,9 @@
       width: 100%; height: 100%; border-radius: var(--card-radius);
     }
     body > div > div {
-      position: absolute; width: 100%; height: 100%;
+      position: absolute;
+      inset: 0;                    /* stretch to card edges */
+      width: auto; height: auto;   /* filled by inset; avoids fighting width:100% */
       background: var(--card-color);
       border-radius: calc(calc(var(--card-radius) * 0.9));
       display: flex; flex-direction: column; gap: 0.6em;
@@ -215,13 +217,13 @@
       font-size: 0.55em;
       font-weight: 400;
       font-stretch: normal;
-      letter-spacing: 1em;      /* 中文：一个字一格 */
-      padding-left: 1em;
+      letter-spacing: 0.18em;   /* Latin text: gentle tracking (was 1em for CJK) */
+      padding-left: 0.18em;
       text-transform: none;
       opacity: 0.7;
     }
 
-    /* ===== 卡片内部：字幕弹出模糊特效 ===== */
+    /* ===== Card interior: subtitle blur-in effect ===== */
     #datouwang {
       position: relative; display: grid; width: 100%;
       margin-top: 5.8em; text-align: center;
@@ -260,7 +262,7 @@
     #datouwang > div:nth-child(4) { animation-delay: 12s; }
     #datouwang > div:nth-child(5) { animation-delay: 16s; }
 
-    /* ===== 粒子消散特效 ===== */
+    /* ===== Particle dissolve effect ===== */
     #fx {
       position: fixed; inset: 0;
       width: 100vw; height: 100vh;
@@ -277,7 +279,7 @@
       100% { opacity: 0; transform: scale(1.06); }
     }
 
-    /* 1440px 及以上：卡片最大宽度限制为 560px */
+    /* 1440px and above: cap card width at 560px */
     @media (min-width: 1440px) {
       :root {
         --card-width: 560px;
@@ -296,28 +298,28 @@
     <span class="glow"></span>
 
     <a class="card-link"
-       href="practical-playbook.html"
-       aria-label="杨氏家族全天候永久投资组合"></a>
+       href="hk-account-dashboard.html"
+       aria-label="Yang Family All-Weather Permanent Portfolio"></a>
 
     <div>
       <div class="card-title"><span>HOME</span>Yang Shengqi's</div>
 
-      <!-- 变动文字 -->
+      <!-- Rotating text -->
       <div id="datouwang">
-        <div>本方案适用于<br><span>地球上任何一个国家、任何一个人。</span></div>
-        <div>核心逻辑<br><span>全球化、分散化、多币种化、去中心化的资产拓扑结构，是唯一分摊风险的策略。</span></div>
-        <div>单一法币 + 单一市场 + 单一配置<br><span>构成一个三元共振的脆弱系统。</span></div>
-        <div>损失不是三项相加，而是“三项相乘”。<br><span>当危机来临，汇率贬值、市场崩盘、资产缩值往往不是先后发生，而是同时爆发并相互强化。</span></div>
-        <div>本方案不是“中国解决方案”，也不是“香港解决方案”。<br><span>这是一个人类级别的“法币风险对冲协议”，它的本质就是要求不输。</span></div>
+        <div>This plan works for<br><span>any country, any person on Earth.</span></div>
+        <div>The Core Logic<br><span>A global, diversified, multi-currency, decentralized asset topology is the only strategy that spreads risk.</span></div>
+        <div>One fiat + one market + one allocation<br><span>forms a fragile three-way resonance system.</span></div>
+        <div>Losses aren't added up — they're multiplied.<br><span>In a crisis, currency devaluation, market collapse, and asset write-downs rarely come one at a time; they erupt together and reinforce each other.</span></div>
+        <div>This is not a "China solution," nor a "Hong Kong solution."<br><span>It is a human-level "fiat-risk hedge protocol," and its essence is simply: don't lose.</span></div>
       </div>
 
-      <!-- 横线 + 副标题 -->
+      <!-- Divider + subtitle -->
       <hr class="card-divider">
-      <p class="card-subtitle">杨氏家族全天候永久投资组合</p>
+      <p class="card-subtitle">Yang Family All-Weather Permanent Portfolio</p>
     </div>
   </div>
 
-  <!-- 粒子画布 -->
+  <!-- Particle canvas -->
   <canvas id="fx" aria-hidden="true"></canvas>
 
   <script>
