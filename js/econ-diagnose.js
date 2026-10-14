@@ -1,9 +1,5 @@
 /* ============================================================
- * econ-diagnose.js —— 经济数据趋势 + 真实性检验 v5.1
- *
- *  v5.1 改动：
- *   - 新增 03 数据总览（风险环+滑块 / 矛盾+协同环 / 四维半圆）
- *   - 原 03-06 顺延为 04-07
+ * econ-diagnose.js —— 经济数据趋势 + 真实性检验 v5.2
  * ============================================================ */
 (function () {
 'use strict';
@@ -68,7 +64,7 @@ function showToast(msg){
 }
 
 /* ============================================================
- * 指标解释文案（徽章悬停内容）
+ * 指标解释文案
  * ============================================================ */
 var TIPS = {
   pmi: '采购经理指数，对企业采购经理的月度调查。50 是荣枯线：高于 50 说明多数企业认为生意在扩张，低于 50 说明在收缩。',
@@ -369,7 +365,7 @@ function bindTrendHover(container){
   if(!tip) return;
   var root = container || document;
 
-  $$('.chart-card, .big', root).forEach(function(card){
+  $$('.chart-card, .big, .risk-trend', root).forEach(function(card){
     if(card.__hoverBound) return;
     var svg = card.querySelector('svg');
     if(!svg) return;
@@ -386,7 +382,10 @@ function bindTrendHover(container){
         time: d.getAttribute('data-time')||'',
         val: d.getAttribute('data-val')||'',
         label: d.getAttribute('data-label')||'',
-        unit: d.getAttribute('data-unit')||''
+        unit: d.getAttribute('data-unit')||'',
+        val2: d.getAttribute('data-val2')||'',
+        label2: d.getAttribute('data-label2')||'',
+        unit2: d.getAttribute('data-unit2')||''
       };
     });
 
@@ -411,7 +410,13 @@ function bindTrendHover(container){
       var valStr = isNaN(num) ? best.val : num.toFixed(1);
       var unit = best.unit || '';
 
-      tip.innerHTML = '<b>'+esc(best.time)+'</b> · '+esc(label)+'：'+valStr+unit;
+      if(isNum(best.val2)){
+        tip.innerHTML = '<b>'+esc(best.time)+'</b>'
+          + '<br>'+esc(label)+'：'+valStr+unit
+          + '<br>'+esc(best.label2)+'：'+Number(best.val2).toFixed(1)+(best.unit2||'');
+      } else {
+        tip.innerHTML = '<b>'+esc(best.time)+'</b> · '+esc(label)+'：'+valStr+unit;
+      }
       tip.classList.add('show');
       card.classList.add('is-hovering');
 
@@ -979,11 +984,11 @@ function renderConflict(rows, checks, risk){
       + '<path d="'+d+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>'
         + dots + yl + '</svg>'
           + '<div class="chart-legend">'
-            + '<span class="lg-item"><i class="lg-dot ok"></i>绿 &lt;25</span>'
+            + '<span class="lg-item"><i class="lg-dot ok"></i>低风险 &lt; 25</span>'
             + '<span class="lg-sep">·</span>'
-            + '<span class="lg-item"><i class="lg-dot warn"></i>黄 25–60</span>'
+            + '<span class="lg-item"><i class="lg-dot warn"></i>中风险 25 – 60</span>'
             + '<span class="lg-sep">·</span>'
-            + '<span class="lg-item"><i class="lg-dot fail"></i>红 ≥60</span>'
+            + '<span class="lg-item"><i class="lg-dot fail"></i>高风险 ≥ 60</span>'
           + '</div>'
           + '</div>';
   }
@@ -1139,18 +1144,27 @@ function coordPersist(rows){
   if(rAvg > 2.0 && rAvg > pAvg + 0.5){
     lv='fail'; score=100; trend='扩大';
   } else if(rAvg > 2.0 && Math.abs(rAvg - pAvg) < 0.5){
-    lv='warn'; score=75; trend='持续高位';
+    lv='fail'; score=90;  trend='稳态高位';
+  } else if(rAvg > 1.2 && Math.abs(rAvg - pAvg) < 0.5){
+    lv='warn'; score=60;  trend='稳态中等背离';
   } else if(rAvg < pAvg - 0.5){
-    lv='ok'; score=30; trend='收窄'; veto=true;
+    if(rAvg > 2.0){
+      lv='warn'; score=75; trend='高位收窄';
+    } else {
+      lv='ok';   score=30; trend='收窄';
+      if(rAvg < 1.2) veto=true;
+    }
   } else {
-    lv='ok'; score=0; trend='正常'; veto=true;
+    lv='ok';   score=0;   trend='正常'; veto=true;
   }
 
   var msg = '近12期均差 '+fmt(rAvg)+' ｜ 前12期均差 '+fmt(pAvg)+' ｜ 趋势：'+trend+'。';
-  if(lv==='fail') msg += '背离在扩大——系统性失真的时间特征。';
-  else if(lv==='warn') msg += '背离持续高位，需警惕。';
-  else if(trend==='收窄') msg += '背离在收窄，未见持续恶化。';
-  else msg += '未见持续背离。';
+  if(trend==='扩大')            msg += '背离在扩大——系统性失真的时间特征。';
+  else if(trend==='稳态高位')    msg += '⚠ 背离长期维持高位、不见收敛。这不是"稳定"，是虚报能力已经固化——比偶发虚报更难纠正。';
+  else if(trend==='稳态中等背离') msg += '⚠ 背离长期稳定存在。虽未扩大，但多年不动本身就是异常。';
+  else if(trend==='高位收窄')    msg += '⚠ 背离有所收窄，但仍处高位。改善幅度不足以判定风险解除。';
+  else if(trend==='收窄')       msg += '背离在收窄，未见持续恶化。';
+  else                          msg += '未见持续背离。';
 
   var ev = '近12期均差 '+fmt(rAvg)+' ｜ 前12期均差 '+fmt(pAvg)
     + ' ｜ 最长连续背离 '+maxRun+' 期';
@@ -1310,8 +1324,10 @@ function renderCoord(rows){
     if(top) concl.push({c:'info',
       t:'得分主要来自 <strong>'+esc(top.n)+'</strong>：'+esc(top.msg)});
     var p = checks.filter(function(c){ return c.k==='persist'; })[0];
-    if(p && p.lv!=='skip')
-      concl.push({c:'info', t:'② 背离持续性：'+esc(p.msg)});
+    if(p && p.lv!=='skip'){
+      var pc = p.lv==='fail' ? 'fail' : (p.lv==='warn' ? 'warn' : 'info');
+      concl.push({c:pc, t:'② 背离持续性：'+esc(p.msg)});
+    }
     if(vetoed)
       concl.push({c:'warn', t:'注意：因背离未持续扩大，已触发封顶规则，总分不代表已构成系统性背离。'});
   }
@@ -1642,6 +1658,129 @@ function riskTotal(rows){
   };
 }
 
+/* ============================================================
+ * 04 真实性风险走势（双线：滚动 24 期 + 全历史累计）
+ * ============================================================ */
+var RISK_WIN = 24;
+
+function riskSeries(rows){
+  var out = [];
+  if(rows.length < 14) return out;
+
+  for(var t = 11; t < rows.length; t++){
+    var subWin = rows.slice(Math.max(0, t - RISK_WIN + 1), t + 1);
+    var subAll = rows.slice(0, t + 1);
+
+    out.push({
+      t: rows[t].time,
+      total: riskTotal(subWin).total,
+      cum:   riskTotal(subAll).total
+    });
+  }
+  return out;
+}
+
+function riskTrendHtml(series){
+  if(!series || series.length < 3) return '';
+
+  var W = 1360, H = 250, pl = 54, pr = 24, pt = 16, pb = 36;
+  var iw = W - pl - pr, ih = H - pt - pb, n = series.length;
+  var xo = function(i){ return pl + (n === 1 ? iw / 2 : (i / (n - 1)) * iw); };
+  var yo = function(v){ return pt + (1 - clamp(v, 0, 100) / 100) * ih; };
+
+  var svg = '';
+
+  [0, 25, 60, 100].forEach(function(v){
+    var y = yo(v);
+    svg += '<line x1="' + pl + '" y1="' + y.toFixed(1) + '" x2="' + (W - pr)
+         + '" y2="' + y.toFixed(1) + '" stroke="#cdd2da" stroke-width="1"/>'
+         + '<text x="' + (pl - 8) + '" y="' + (y + 4).toFixed(1)
+         + '" font-size="11" fill="#9aa3b5" text-anchor="end">' + v + '</text>';
+  });
+
+  function pathOf(key){
+    var d = '', pen = false;
+    series.forEach(function(p, i){
+      if(p[key] == null){ pen = false; return; }
+      d += (pen ? 'L' : 'M') + xo(i).toFixed(1) + ',' + yo(p[key]).toFixed(1) + ' ';
+      pen = true;
+    });
+    return d;
+  }
+
+  var xl = '', ly = '', lastLabelX = -1e9;
+  series.forEach(function(p, i){
+    var y = p.t.slice(0, 4);
+    if(y !== ly){
+      var x = xo(i);
+      if(x - lastLabelX >= 32){
+        xl += '<text x="' + x.toFixed(1) + '" y="' + (H - 12) + '" font-size="11" '
+            + 'fill="#9aa3b5" text-anchor="middle">' + y + '</text>';
+        lastLabelX = x;
+      }
+      ly = y;
+    }
+  });
+
+  var dots = series.map(function(p, i){
+    if(p.total == null) return '';
+    var cx = xo(i).toFixed(1), cy = yo(p.total).toFixed(1);
+    return '<circle cx="' + cx + '" cy="' + cy + '" r="10" fill="transparent"'
+         + ' data-time="' + esc(p.t) + '" data-val="' + p.total
+         + '" data-label="当期风险" data-unit="（滚动 24 期）"'
+         + ' data-val2="' + (p.cum == null ? '' : p.cum) + '"'
+         + ' data-label2="历史风险" data-unit2="（全历史数据）"></circle>';
+  }).join('');
+
+  var last = series[series.length - 1];
+  var lc = last.total == null ? 'var(--mid)'
+         : (last.total >= 60 ? 'var(--fail)'
+         : (last.total >= 25 ? 'var(--warn)' : 'var(--ok)'));
+  var lcum = '#5b8def';
+
+  return '<div class="risk-trend">'
+    + '<div class="risk-trend-head">'
+      + '<span class="t">真实性风险走势'
+        + badge('两条线：红线 = 滚动 24 期（每点只取最近 24 期，反映当期风险）；'
+              + '蓝线 = 全历史累计（每点取从起点到该点的全部数据，反映长期水平）。')
+      + '</span>'
+      + '<span class="v">当期风险 <b style="color:' + lc + ';">'
+        + (last.total == null ? '—' : last.total) + '</b>/100'
+        + ' · 全历史风险 <b style="color:' + lcum + ';">'
+        + (last.cum == null ? '—' : last.cum) + '</b>/100</span>'
+    + '</div>'
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">'
+      + svg
+      + '<path d="' + pathOf('cum') + '" fill="none" stroke="#5b8def" stroke-width="2" '
+        + 'stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>'
+      + '<path d="' + pathOf('total') + '" fill="none" stroke="#ef6b6b" stroke-width="2.6" '
+        + 'stroke-linejoin="round" stroke-linecap="round"/>'
+      + dots + xl
+    + '</svg>'
+    + '<div class="chart-legend">'
+      + '<span class="lg-item"><i style="width:14px;height:3px;border-radius:2px;'
+        + 'background:#ef6b6b;"></i>当期风险（滚动 24 期）</span>'
+      + '<span class="lg-item"><i style="width:14px;height:3px;border-radius:2px;'
+        + 'background:#5b8def;"></i>全历史累计</span>'
+      + '<span class="lg-sep">·</span>'
+      + '<span class="lg-item"><i class="lg-dot ok"></i>低风险 &lt; 25</span>'
+      + '<span class="lg-sep">·</span>'
+      + '<span class="lg-item"><i class="lg-dot warn"></i>中风险 25 – 60</span>'
+      + '<span class="lg-sep">·</span>'
+      + '<span class="lg-item"><i class="lg-dot fail"></i>高风险 ≥ 60</span>'
+    + '</div>'
+    + '</div>';
+}
+
+function renderRiskTrend(boxId, rows){
+  var box = $('#'+boxId);
+  if(!box) return;
+  if(!rows.length){ box.innerHTML = ''; return; }
+  var series = riskSeries(rows);
+  box.innerHTML = riskTrendHtml(series);
+  bindTrendHover(box);
+}
+
 function renderOverview(rows){
   var box = $('#overviewBox');
   if(!box) return;
@@ -1655,16 +1794,16 @@ function renderOverview(rows){
   var total = rt.total;
   var circ = 2 * Math.PI * 50;
 
-  /* ============ 第一行：真实性风险总览（1×2）============ */
+  /* 第一行：真实性风险总览 */
   var lv, title, color;
   if(total === null){
-    lv = 'skip'; title = '数据不足'; color = 'var(--mid)';
+    lv = 'skip'; title = '数据不足，无法判断！'; color = 'var(--mid)';
   } else if(total >= 60){
-    lv = 'fail'; title = '数据真实性风险高'; color = 'var(--fail)';
+    lv = 'fail'; title = '数据真实性：高风险！'; color = 'var(--fail)';
   } else if(total >= 25){
-    lv = 'warn'; title = '数据真实性风险中等'; color = 'var(--warn)';
+    lv = 'warn'; title = '数据真实性：中风险！'; color = 'var(--warn)';
   } else {
-    lv = 'ok'; title = '数据真实性风险低'; color = 'var(--ok)';
+    lv = 'ok'; title = '数据真实性：低风险！'; color = 'var(--ok)';
   }
 
   var riskDesc = total === null
@@ -1680,9 +1819,8 @@ function renderOverview(rows){
 
   var html = '<div class="ov-row ov-row-2">';
 
-  /* 左卡：单色环 + 右侧文字 */
   html += '<div class="ov-cell">'
-    + '<div class="ov-cell-title">真实性风险总览</div>'
+    + '<div class="ov-cell-title">真实性风险总览 · 全历史</div>'
     + '<div class="ov-risk-left">'
     +   '<div class="ov-cell-gauge">'
     +     '<svg viewBox="0 0 120 120">'
@@ -1701,7 +1839,6 @@ function renderOverview(rows){
     + '</div>'
     + '</div>';
 
-  /* 右卡：滑块 + 描述 */
   html += '<div class="ov-cell">'
     + '<div class="ov-cell-title">风险区位置</div>'
     + '<div style="display:flex;align-items:center;gap:14px;">'
@@ -1719,7 +1856,7 @@ function renderOverview(rows){
 
   html += '</div>';
 
-  /* ============ 第二行：分项指标（1×2）============ */
+  /* 第二行：分项指标 */
   var rs = rt.riskScore;
   var cs = rt.coordScore;
 
@@ -1731,8 +1868,6 @@ function renderOverview(rows){
   }
 
   var rsColor = duoColor(rs), csColor = duoColor(cs);
-  var duoOffR = rs == null ? circ : circ * (1 - rs/100);
-  var duoOffC = cs == null ? circ : circ * (1 - cs/100);
 
   var doneChecks = rt.checks.filter(function(c){ return c.lv !== 'skip'; });
   var failChecks = doneChecks.filter(function(c){ return c.lv === 'fail'; });
@@ -1762,14 +1897,15 @@ function renderOverview(rows){
       }
     }
     if(persistC && persistC.trend){
-      csDesc += ' 背离持续性：' + persistC.trend + '。';
+      var tflag = (persistC.trend==='稳态高位' || persistC.trend==='稳态中等背离'
+                || persistC.trend==='高位收窄') ? '⚠ ' : '';
+      csDesc += ' 背离持续性：' + tflag + persistC.trend + '。';
     }
     if(rt.coordVetoed) csDesc += ' 因背离未扩大，总分已封顶。';
   }
 
   html += '<div class="ov-row ov-row-2">';
 
-  /* 左卡：矛盾（半圆 + /100） */
   html += '<div class="ov-cell">'
     + '<div class="ov-cell-title">矛盾指数</div>'
     + '<div class="ov-cell-gauge-wrap">'
@@ -1789,7 +1925,6 @@ function renderOverview(rows){
     + '<div class="ov-cell-note">'+esc(rsDesc)+'</div>'
     + '</div>';
 
-  /* 右卡：协同（半圆 + /100） */
   html += '<div class="ov-cell">'
     + '<div class="ov-cell-title">协同性检测</div>'
     + '<div class="ov-cell-gauge-wrap">'
@@ -1811,10 +1946,9 @@ function renderOverview(rows){
 
   html += '</div>';
 
-  /* ============ 第三行：四维参考信号（1×4）============ */
+  /* 第三行：四维参考信号 */
   var a = buildAnalysis(rows);
   if(a){
-    var comp = a.comp;
     var dimsCirc = Math.PI * 40;
 
     html += '<div class="ov-row ov-row-4">';
@@ -1862,7 +1996,6 @@ function renderOverview(rows){
 
     html += '</div>';
 
-    /* 裸灰色小字说明（无容器） */
     html += '<div class="ov-bare-note">'
       + '⚠ 四维评分反映的是"经济景气状态"，不是数据真伪——与上方风险区无关，请勿混用。'
       + '</div>';
@@ -1875,7 +2008,9 @@ function renderOverview(rows){
       el.style.strokeDashoffset = el.getAttribute('data-off');
     });
   });
-}function renderRangeTabs(){
+}
+
+function renderRangeTabs(){
   var box = document.getElementById('rangeTabs');
   if(!box) return;
   box.innerHTML = RANGES.map(function(r){
@@ -1900,6 +2035,7 @@ function analyze(rows){
   renderRangeTabs();
   renderOverview(rows);
   var r = rangeRows(rows);
+  renderRiskTrend('gRisk', rows);
   renderTrendGroup(MAIN, 'gMain', r);
   renderTrendGroup(OTHER, 'gOther', r);
   renderTrendGroup(ANCHOR, 'gAnchor', r);
@@ -1946,7 +2082,7 @@ $('#clear').addEventListener('click', function(){
   $('#paste').value = '';
   $('#status').textContent = '已清空。';
   renderTable();
-  ['gMain','gOther','gAnchor','gFiscal'].forEach(function(id){ $('#'+id).innerHTML=''; });
+  ['gRisk','gMain','gOther','gAnchor','gFiscal'].forEach(function(id){ $('#'+id).innerHTML=''; });
   $('#overviewBox').innerHTML = '<div class="empty">导入数据后自动生成。</div>';
   $('#conflictBox').innerHTML = '<div class="empty">导入数据后自动生成。</div>';
   $('#coordBox').innerHTML = '<div class="empty">导入数据后自动生成。</div>';
