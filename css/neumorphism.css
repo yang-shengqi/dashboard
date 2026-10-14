@@ -27,6 +27,13 @@
          "Segoe UI",Roboto,Helvetica,Arial,
          "Noto Sans SC","Source Han Sans SC",sans-serif;
 }
+
+/* ============ 涨跌方向色（供 deltaClass 使用）· 新增 ============ */
+/* 语义：up = 朝好的方向变（绿），dn = 朝坏的方向变（红），fl = 中性/无数据（灰） */
+.up{color:var(--ok);}
+.dn{color:var(--fail);}
+.fl{color:var(--text-3);}
+
 *{box-sizing:border-box;}
 *,*::before,*::after{font-family:var(--font);}
 
@@ -396,19 +403,27 @@ td.na{color:var(--text-3);}
 .coord-summary-card{
   background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-out);
   padding:24px 28px;margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:32px;
 }
-.coord-summary-head{display:flex;flex-direction:column;gap:4px;}
 .coord-summary-title{font-size:15px;font-weight:600;color:var(--text);}
 .coord-summary-title.ok{color:var(--ok);}
 .coord-summary-title.warn{color:var(--warn);}
 .coord-summary-title.fail{color:var(--fail);}
 .coord-summary-title.skip{color:var(--mid);}
-.coord-summary-sub{font-size:12.5px;color:var(--text-3);line-height:1.55;}
-.coord-summary-body{
-  display:grid;grid-template-columns:max-content 1fr;
-  gap:32px;align-items:center;margin-top:16px;
+.coord-summary-sub{font-size:12.5px;color:var(--text-3);line-height:1.55;margin-top:4px;}
+
+/* 右栏：文字块 */
+.coord-summary-main{
+  flex:1 1 auto;
+  min-width:0;
 }
-.coord-gauge-wrap{display:flex;flex-direction:column;align-items:center;}
+
+.coord-gauge-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;
+}
 .coord-gauge{position:relative;width:140px;height:140px;}
 .coord-gauge svg{width:100%;height:100%;transform:rotate(-90deg);}
 .coord-gauge .cg-bg{fill:none;stroke:#cdd2da;stroke-width:11;}
@@ -419,7 +434,7 @@ td.na{color:var(--text-3);}
 .coord-gauge .cg-val .n{font-size:32px;font-weight:700;line-height:1;
   font-variant-numeric:tabular-nums;}
 .coord-gauge .cg-val .l{font-size:11px;color:var(--text-3);margin-top:5px;}
-.coord-summary-desc{font-size:13px;color:var(--text-2);line-height:1.75;}
+.coord-summary-desc{font-size:13px;color:var(--text-2);line-height:1.75;margin-top:10px;}
 
 .coord-note{
   margin-top:12px;padding:11px 15px;border-radius:var(--r-sm);

@@ -1,5 +1,10 @@
 /* ============================================================
- * econ-diagnose.js —— 经济数据趋势 + 真实性检验 v5.2
+ * econ-diagnose.js —— 经济数据趋势 + 真实性检验
+ * v5.3.1 · 木桶合成 + 相关性去重
+ *
+ * 相对 v5.3 的改动：
+ *   - riskScore：实物锚 fail 时，克强指数不再独立计为 fail（相关性去重）
+ *   - coordAggregate：同步背离 fail 时，持续性不再独立计为 fail
  * ============================================================ */
 (function () {
 'use strict';
@@ -14,6 +19,27 @@ function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
 function mean(a){ return a.length? a.reduce(function(s,x){return s+x;},0)/a.length : NaN; }
 function stdev(a){ if(a.length<2) return 0; var m=mean(a);
   return Math.sqrt(a.reduce(function(s,x){ return s+(x-m)*(x-m); },0)/(a.length-1)); }
+
+/* ============================================================
+ * 木桶合成核心
+ * ============================================================ */
+var BUCKET_P = 0.5;
+
+var CRED = { ok:100, warn:50, fail:0, skip:75 };
+
+function bucketMean(items){
+  if(!items || !items.length) return null;
+  var sw = 0, acc = 0;
+  items.forEach(function(it){
+    var w = it.w;
+    if(!(w > 0)) return;
+    var v = clamp(it.v, 0, 100) / 100;
+    sw += w;
+    acc += w * Math.pow(v, BUCKET_P);
+  });
+  if(sw <= 0) return null;
+  return Math.pow(acc / sw, 1 / BUCKET_P) * 100;
+}
 
 var LS_KEY = 'econ_v4_data';
 
@@ -703,6 +729,15 @@ function renderTrendGroup(defs, boxId, rows){
 /* ============================================================
  * 矛盾检测
  * ============================================================ */
+var CHECK_W = {
+  anchor: 0.25,
+  tax:    0.20,
+  def:    0.16,
+  ic:     0.15,
+  kq:     0.12,
+  mm:     0.12
+};
+
 function pairGap(rows, a, b){
   var o=[];
   rows.forEach(function(r){
@@ -878,15 +913,30 @@ function runChecks(rows){
   ];
 }
 
+/* 矛盾指数：木桶合成 + 相关性去重
+ * 去重：实物锚已 fail 时，克强指数不再独立计为 fail（二者共享发电/货运） */
 function riskScore(checks){
-  var done = checks.filter(function(c){ return c.lv !== 'skip'; });
-  if(!done.length) return {score:null, lv:'unknown', n:0, total:checks.length};
-  var w = {fail:100, warn:45, ok:0};
-  var s = Math.round(mean(done.map(function(c){ return w[c.lv]; })));
+  if(!checks || !checks.length) return {score:null, lv:'unknown', n:0, total:0};
+
+  var anchorC = checks.filter(function(c){ return c.k==='anchor'; })[0];
+  var anchorFail = !!(anchorC && anchorC.lv === 'fail');
+
+  var items = checks.map(function(c){
+    var lv = c.lv;
+    if(anchorFail && c.k === 'kq' && lv === 'fail') lv = 'warn';
+    return {
+      v: (CRED[lv] != null) ? CRED[lv] : CRED.skip,
+      w: CHECK_W[c.k] || (1 / checks.length)
+    };
+  });
+  var cred = bucketMean(items);
+  if(cred === null) return {score:null, lv:'unknown', n:0, total:checks.length};
+  var s = Math.round(100 - cred);
+  var n = checks.filter(function(c){ return c.lv !== 'skip'; }).length;
   return {
-    score:s,
+    score: s,
     lv: s>=60 ? 'high' : (s>=25 ? 'mid' : 'low'),
-    n: done.length,
+    n: n,
     total: checks.length
   };
 }
@@ -931,8 +981,8 @@ function renderConflict(rows, checks, risk){
   var title = risk.lv==='high' ? '检测到多重矛盾 · 数据可信度低'
     : risk.lv==='mid' ? '存在部分矛盾 · 需谨慎对待'
     : risk.lv==='low' ? '各项交叉检验基本自洽' : '数据不足';
-  var desc = risk.score==null ? '有效检测项不足，无法给出综合判断。'
-    : '基于 '+risk.n+' 项可用交叉检验（'+(risk.total-risk.n)+' 项因数据缺失跳过）。'
+  var desc = risk.score==null ? '数据不足，无法给出综合判断。'
+    : '基于 '+risk.total+' 项交叉检验（木桶合成，短板主导，缺失项按中性计入）。'
       + '矛盾指数 '+risk.score+'/100。分数越高，官方数据内部或与实物量的矛盾越多。';
 
   var html = '<div class="card" style="margin-bottom:16px;"><div class="verdict">'
@@ -1070,6 +1120,44 @@ function renderConflict(rows, checks, risk){
 /* ============================================================
  * 协同性检测
  * ============================================================ */
+var COORD_W = {
+  sync:    0.35,
+  persist: 0.30,
+  fiscal:  0.20,
+  money:   0.15
+};
+
+function coordCred(c){
+  if(c.lv === 'skip') return CRED.skip;
+  if(c.score != null) return c.score;
+  return (CRED[c.lv] != null) ? CRED[c.lv] : CRED.skip;
+}
+
+function computeCoordChecks(rows){
+  return [ coordSync(rows), coordPersist(rows), coordFiscal(rows), coordMoney(rows) ];
+}
+
+/* 协同项木桶合成 + 相关性去重
+ * 去重：同步背离已 fail 时，持续性不再独立计为 fail（二者同看"背离是否广泛"） */
+function coordAggregate(checks){
+  var veto = false;
+
+  var syncC = checks.filter(function(c){ return c.k==='sync'; })[0];
+  var syncFail = !!(syncC && syncC.lv === 'fail');
+
+  var cred = bucketMean(checks.map(function(c){
+    if(c.k === 'persist' && c.veto) veto = true;
+    var v = coordCred(c);
+    if(syncFail && c.k === 'persist' && c.lv === 'fail') v = CRED.warn;
+    return { v: v, w: COORD_W[c.k] || 0 };
+  }));
+  if(cred === null) return {total:null, vetoed:false};
+  var total = Math.round(100 - cred);
+  var vetoed = false;
+  if(veto && total > 59){ total = 59; vetoed = true; }
+  return {total:total, vetoed:vetoed};
+}
+
 function coordSync(rows){
   var hits = [];
   var valid = 0;
@@ -1097,9 +1185,9 @@ function coordSync(rows){
 
   var ratio = hits.length / valid;
   var lv, score;
-  if(ratio >= 0.25){ lv='fail'; score=100; }
-  else if(ratio >= 0.10){ lv='warn'; score=55; }
-  else { lv='ok'; score=20; }
+  if(ratio >= 0.25){ lv='fail'; score=0; }
+  else if(ratio >= 0.10){ lv='warn'; score=50; }
+  else { lv='ok'; score=100; }
 
   var msg;
   if(lv==='fail') msg='协同背离时点占比 '+Math.round(ratio*100)+'%——多项指标长期同向偏离，符合系统性失真的广度特征。';
@@ -1142,29 +1230,38 @@ function coordPersist(rows){
 
   var lv, score, trend, veto=false;
   if(rAvg > 2.0 && rAvg > pAvg + 0.5){
-    lv='fail'; score=100; trend='扩大';
-  } else if(rAvg > 2.0 && Math.abs(rAvg - pAvg) < 0.5){
-    lv='fail'; score=90;  trend='稳态高位';
+    lv='fail'; score=0;   trend='扩大';
+  } else if(rAvg > 2.0 && rAvg <= pAvg - 0.5){
+    lv='warn'; score=30;  trend='高位收窄';
+  } else if(rAvg > 2.0 && rAvg < pAvg - 0.1){
+    lv='fail'; score=20;  trend='高位微降';
+  } else if(rAvg > 2.0){
+    lv='fail'; score=10;  trend='稳态高位';
   } else if(rAvg > 1.2 && Math.abs(rAvg - pAvg) < 0.5){
-    lv='warn'; score=60;  trend='稳态中等背离';
+    lv='warn'; score=50;  trend='稳态中等背离';
   } else if(rAvg < pAvg - 0.5){
-    if(rAvg > 2.0){
-      lv='warn'; score=75; trend='高位收窄';
-    } else {
-      lv='ok';   score=30; trend='收窄';
-      if(rAvg < 1.2) veto=true;
-    }
+    lv='ok';   score=80;  trend='收窄';
+    if(rAvg < 1.2) veto=true;
   } else {
-    lv='ok';   score=0;   trend='正常'; veto=true;
+    lv='ok';   score=100; trend='正常'; veto=true;
   }
 
   var msg = '近12期均差 '+fmt(rAvg)+' ｜ 前12期均差 '+fmt(pAvg)+' ｜ 趋势：'+trend+'。';
-  if(trend==='扩大')            msg += '背离在扩大——系统性失真的时间特征。';
-  else if(trend==='稳态高位')    msg += '⚠ 背离长期维持高位、不见收敛。这不是"稳定"，是虚报能力已经固化——比偶发虚报更难纠正。';
-  else if(trend==='稳态中等背离') msg += '⚠ 背离长期稳定存在。虽未扩大，但多年不动本身就是异常。';
-  else if(trend==='高位收窄')    msg += '⚠ 背离有所收窄，但仍处高位。改善幅度不足以判定风险解除。';
-  else if(trend==='收窄')       msg += '背离在收窄，未见持续恶化。';
-  else                          msg += '未见持续背离。';
+  if(trend==='扩大'){
+    msg += '背离在扩大——系统性失真的时间特征。';
+  } else if(trend==='稳态高位'){
+    msg += '⚠ 背离长期维持高位、不见收敛。这不是"稳定"，是虚报能力已经固化——比偶发虚报更难纠正。';
+  } else if(trend==='高位微降'){
+    msg += '⚠ 背离仍处高位，但近12期略有收窄（'+fmt(pAvg)+' → '+fmt(rAvg)+'）。方向在改善，幅度还不够解除警报。';
+  } else if(trend==='稳态中等背离'){
+    msg += '⚠ 背离长期稳定存在。虽未扩大，但多年不动本身就是异常。';
+  } else if(trend==='高位收窄'){
+    msg += '⚠ 背离有所收窄，但仍处高位。改善幅度不足以判定风险解除。';
+  } else if(trend==='收窄'){
+    msg += '背离在收窄，未见持续恶化。';
+  } else {
+    msg += '未见持续背离。';
+  }
 
   var ev = '近12期均差 '+fmt(rAvg)+' ｜ 前12期均差 '+fmt(pAvg)
     + ' ｜ 最长连续背离 '+maxRun+' 期';
@@ -1191,9 +1288,9 @@ function coordFiscal(rows){
     : sorted[mid];
 
   var lv, score;
-  if(med < 0.4 || med > 1.8){ lv='fail'; score=100; }
-  else if(med < 0.7 || med > 1.4){ lv='warn'; score=55; }
-  else { lv='ok'; score=20; }
+  if(med < 0.4 || med > 1.8){ lv='fail'; score=0; }
+  else if(med < 0.7 || med > 1.4){ lv='warn'; score=50; }
+  else { lv='ok'; score=100; }
 
   var dir = med < 1 ? '税收增速低于产出' : '税收增速高于产出';
   var msg;
@@ -1219,9 +1316,9 @@ function coordMoney(rows){
   var abs = Math.abs(g);
 
   var lv, score;
-  if(abs > 6){ lv='fail'; score=100; }
+  if(abs > 6){ lv='fail'; score=0; }
   else if(abs > 3){ lv='warn'; score=50; }
-  else { lv='ok'; score=20; }
+  else { lv='ok'; score=100; }
 
   var msg;
   if(lv==='fail') msg='近12期平均 (M2 − 名义GDP) = '+fmt(g)+' pp，长期单方向偏离——货币与实体脱节明显。';
@@ -1241,22 +1338,10 @@ function renderCoord(rows){
     return;
   }
 
-  var checks = [ coordSync(rows), coordPersist(rows),
-                 coordFiscal(rows), coordMoney(rows) ];
-  var W = {sync:0.40, persist:0.30, fiscal:0.18, money:0.12};
-
-  var sumW = 0, sumS = 0, veto = false;
-  checks.forEach(function(c){
-    if(c.lv === 'skip') return;
-    var w = W[c.k] || 0;
-    sumW += w;
-    sumS += w * c.score;
-    if(c.k === 'persist' && c.veto) veto = true;
-  });
-
-  var total = sumW ? Math.round(sumS / sumW) : null;
-  var vetoed = false;
-  if(total !== null && veto && total > 59){ total = 59; vetoed = true; }
+  var checks = computeCoordChecks(rows);
+  var agg = coordAggregate(checks);
+  var total = agg.total;
+  var vetoed = agg.vetoed;
 
   var lv, title, color;
   if(total === null){
@@ -1270,7 +1355,7 @@ function renderCoord(rows){
   }
 
   var desc = total === null
-    ? '有效检测项不足，无法给出协同性判断。'
+    ? '数据不足，无法给出协同性判断。'
     : (total >= 60
         ? '多个独立检验同向、持续、协同偏离，符合系统性数据失真的特征。'
         : total >= 25
@@ -1280,11 +1365,7 @@ function renderCoord(rows){
   var circ = 2 * Math.PI * 50;
   var off = total === null ? circ : circ * (1 - total / 100);
 
-  var html = '<div class="coord-summary-card"><div class="coord-summary-head">'
-    + '<div class="coord-summary-title '+lv+'">'+title+'</div>'
-    + '<div class="coord-summary-sub">协同性异常度 · 基于 '+checks.filter(function(c){return c.lv!=='skip';}).length
-      + ' 项可用检测</div></div>'
-    + '<div class="coord-summary-body">'
+  var html = '<div class="coord-summary-card">'
     + '<div class="coord-gauge-wrap"><div class="coord-gauge">'
     + '<svg viewBox="0 0 120 120">'
     + '<circle class="cg-bg" cx="60" cy="60" r="50"/>'
@@ -1294,11 +1375,15 @@ function renderCoord(rows){
     + '</svg><div class="cg-val"><span class="n" style="color:'+color+';">'
       + (total === null ? '—' : total)
       + '</span><span class="l">协同性异常度</span></div></div></div>'
+    + '<div class="coord-summary-main">'
+    + '<div class="coord-summary-title '+lv+'">'+title+'</div>'
+    + '<div class="coord-summary-sub">协同性异常度 · 木桶合成 · 基于 '
+      + checks.filter(function(c){return c.lv!=='skip';}).length + ' / 4 项可用检测</div>'
     + '<div class="coord-summary-desc">'+desc
       + (vetoed ? '<br><span style="color:var(--warn);">⚠ 因持续性不足（背离未扩大），总分被限制在 59 以内。</span>' : '')
-      + '</div></div>'
+      + '</div>'
     + '<div class="coord-note">协同性异常 ≠ 已证实造假。但多项官方数据长期同向背离，是苏联式数据失真的典型指纹。</div>'
-    + '</div>';
+    + '</div></div>';
 
   html += '<div class="check-grid">';
   checks.forEach(function(c){
@@ -1315,14 +1400,14 @@ function renderCoord(rows){
 
   var concl = [];
   if(total === null){
-    concl.push({c:'warn', t:'有效检测项不足，无法给出协同性判断。'});
+    concl.push({c:'warn', t:'数据不足，无法给出协同性判断。'});
   } else {
     var top = checks.filter(function(c){ return c.lv!=='skip'; })
-      .sort(function(a,b){ return (b.score||0)-(a.score||0); })[0];
+      .sort(function(a,b){ return (a.score||0)-(b.score||0); })[0];
     concl.push({c: lv==='fail'?'fail':(lv==='warn'?'warn':'ok'),
       t:'<strong>协同性异常度 '+total+'/100</strong> —— '+title+'。'});
     if(top) concl.push({c:'info',
-      t:'得分主要来自 <strong>'+esc(top.n)+'</strong>：'+esc(top.msg)});
+      t:'主要短板 <strong>'+esc(top.n)+'</strong>：'+esc(top.msg)});
     var p = checks.filter(function(c){ return c.k==='persist'; })[0];
     if(p && p.lv!=='skip'){
       var pc = p.lv==='fail' ? 'fail' : (p.lv==='warn' ? 'warn' : 'info');
@@ -1620,38 +1705,35 @@ function renderAnalysis(rows, checks, risk){
 /* ============================================================
  * 03 数据总览
  * ============================================================ */
-function riskTotal(rows){
+function riskTotal(rows, fullHistory){
   var checks = runChecks(rows);
   var risk = riskScore(checks);
 
-  var coords = [ coordSync(rows), coordPersist(rows),
-                 coordFiscal(rows), coordMoney(rows) ];
-  var W = {sync:0.40, persist:0.30, fiscal:0.18, money:0.12};
-  var sumW = 0, sumS = 0, veto = false;
-  coords.forEach(function(c){
-    if(c.lv === 'skip') return;
-    var w = W[c.k] || 0;
-    sumW += w;
-    sumS += w * c.score;
-    if(c.k === 'persist' && c.veto) veto = true;
-  });
-  var coordTotal = sumW ? Math.round(sumS / sumW) : null;
-  var vetoed = false;
-  if(coordTotal !== null && veto && coordTotal > 59){ coordTotal = 59; vetoed = true; }
+  var coords = computeCoordChecks(rows);
+
+  /* 持续性单独用全历史数据算（短窗口下会因点数不足被 skip） */
+  if(fullHistory && fullHistory !== rows){
+    var pFull = coordPersist(fullHistory);
+    coords = coords.map(function(c){
+      return c.k === 'persist' ? pFull : c;
+    });
+  }
+
+  var agg = coordAggregate(coords);
 
   var rs = risk.score;
-  var cs = coordTotal;
+  var cs = agg.total;
   var total;
   if(rs == null && cs == null) total = null;
   else if(rs == null) total = cs;
   else if(cs == null) total = rs;
-  else total = Math.round(rs * 0.4 + cs * 0.6);
+  else total = Math.round(rs * 0.55 + cs * 0.45);
 
   return {
     risk: risk,
     riskScore: rs,
     coordScore: cs,
-    coordVetoed: vetoed,
+    coordVetoed: agg.vetoed,
     total: total,
     checks: checks,
     coords: coords
@@ -1659,7 +1741,7 @@ function riskTotal(rows){
 }
 
 /* ============================================================
- * 04 真实性风险走势（双线：滚动 24 期 + 全历史累计）
+ * 04 真实性风险走势
  * ============================================================ */
 var RISK_WIN = 24;
 
@@ -1673,7 +1755,7 @@ function riskSeries(rows){
 
     out.push({
       t: rows[t].time,
-      total: riskTotal(subWin).total,
+      total: riskTotal(subWin, subAll).total,
       cum:   riskTotal(subAll).total
     });
   }
@@ -1794,7 +1876,6 @@ function renderOverview(rows){
   var total = rt.total;
   var circ = 2 * Math.PI * 50;
 
-  /* 第一行：真实性风险总览 */
   var lv, title, color;
   if(total === null){
     lv = 'skip'; title = '数据不足，无法判断！'; color = 'var(--mid)';
@@ -1850,13 +1931,12 @@ function renderOverview(rows){
     + '</div>'
     + '<div class="ov-slider-ticks"><span>0</span><span>25</span><span>60</span><span>100</span></div>'
     + '<div class="ov-cell-note">'+esc(riskDesc)+'<br>'
-    +   '由矛盾指数（40%）与协同性异常度（60%）合成。风险越高，官方数据内部矛盾越多、越系统。'
+    +   '由矛盾指数（55%）与协同性异常度（45%）木桶合成。风险越高，官方数据内部矛盾越多、越系统。'
     + '</div>'
     + '</div>';
 
   html += '</div>';
 
-  /* 第二行：分项指标 */
   var rs = rt.riskScore;
   var cs = rt.coordScore;
 
@@ -1898,7 +1978,7 @@ function renderOverview(rows){
     }
     if(persistC && persistC.trend){
       var tflag = (persistC.trend==='稳态高位' || persistC.trend==='稳态中等背离'
-                || persistC.trend==='高位收窄') ? '⚠ ' : '';
+                || persistC.trend==='高位收窄' || persistC.trend==='高位微降') ? '⚠ ' : '';
       csDesc += ' 背离持续性：' + tflag + persistC.trend + '。';
     }
     if(rt.coordVetoed) csDesc += ' 因背离未扩大，总分已封顶。';
@@ -1946,7 +2026,6 @@ function renderOverview(rows){
 
   html += '</div>';
 
-  /* 第三行：四维参考信号 */
   var a = buildAnalysis(rows);
   if(a){
     var dimsCirc = Math.PI * 40;
@@ -2196,17 +2275,7 @@ if(dz){
   });
 }
 
-var _rt;
-window.addEventListener('resize', function(){
-  clearTimeout(_rt);
-  _rt = setTimeout(function(){
-    if(DATA.length){
-      renderTrendGroup(MAIN, 'gMain', DATA);
-      renderTrendGroup(OTHER, 'gOther', DATA);
-      renderTrendGroup(ANCHOR, 'gAnchor', DATA);
-    }
-  }, 250);
-});
+/* resize handler 已移除：SVG 用 viewBox 自适应缩放，无需重渲染 */
 
 document.addEventListener('mouseover', function(e){
   var el = closestBadge(e.target);
