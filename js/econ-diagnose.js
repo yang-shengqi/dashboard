@@ -1,10 +1,6 @@
 /* ============================================================
  * econ-diagnose.js —— 经济数据趋势 + 真实性检验
- * v5.3.1 · 木桶合成 + 相关性去重
- *
- * 相对 v5.3 的改动：
- *   - riskScore：实物锚 fail 时，克强指数不再独立计为 fail（相关性去重）
- *   - coordAggregate：同步背离 fail 时，持续性不再独立计为 fail
+ * v5.4 · 木桶合成 + 相关性去重 + 及格线
  * ============================================================ */
 (function () {
 'use strict';
@@ -1514,11 +1510,25 @@ function renderAnalysis(rows, checks, risk){
   }
 
   var circ = Math.PI*40;
+  var DIM_THRESH = { pmi: 50, gdp: 60, ppi_cpi: 75, m1m2: 50 };
   var dimsHtml = a.dims.map(function(d){
     var labelHtml = esc(d.n) + badge(DIM_TIPS[d.k]);
+
+    var markHtml = '';
+    if(DIM_THRESH[d.k] != null){
+      var ang = Math.PI * (1 - DIM_THRESH[d.k]/100);
+      var xi = (50 + 36*Math.cos(ang)).toFixed(2);
+      var yi = (50 - 36*Math.sin(ang)).toFixed(2);
+      var xj = (50 + 44*Math.cos(ang)).toFixed(2);
+      var yj = (50 - 44*Math.sin(ang)).toFixed(2);
+      markHtml = '<line x1="'+xi+'" y1="'+yi+'" x2="'+xj+'" y2="'+yj
+        + '" stroke="#9aa3b5" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>';
+    }
+
     if(d.val===null){
       return '<div class="dim"><div class="ring"><svg viewBox="0 0 100 56">'
-        + '<path class="rbg" d="M 10 50 A 40 40 0 0 1 90 50"/></svg>'
+        + '<path class="rbg" d="M 10 50 A 40 40 0 0 1 90 50"/>'
+        + markHtml + '</svg>'
         + '<div class="vl" style="font-size:14px;color:var(--text-3);">—</div></div>'
         + '<div class="lb">'+labelHtml+'</div><div class="sc">数据缺失</div></div>';
     }
@@ -1527,7 +1537,8 @@ function renderAnalysis(rows, checks, risk){
     return '<div class="dim"><div class="ring"><svg viewBox="0 0 100 56">'
       + '<path class="rbg" d="M 10 50 A 40 40 0 0 1 90 50"/>'
       + '<path class="rfg" d="M 10 50 A 40 40 0 0 1 90 50" stroke="'+d.c
-        + '" stroke-dasharray="'+circ+'" stroke-dashoffset="'+circ+'" data-off="'+off+'"/></svg>'
+        + '" stroke-dasharray="'+circ+'" stroke-dashoffset="'+circ+'" data-off="'+off+'"/>'
+      + markHtml + '</svg>'
       + '<div class="vl">'+Math.round(d.val)+'</div></div>'
       + '<div class="lb">'+labelHtml+'</div>'
       + '<div class="sc">绝对 '+Math.round(adj)+' · 权重 '+d.showW+'%</div></div>';
@@ -1876,33 +1887,67 @@ function renderOverview(rows){
   var total = rt.total;
   var circ = 2 * Math.PI * 50;
 
+  /* 当期风险：最近 RISK_WIN 期，持续性用全历史 */
+  var winRows = rows.length > RISK_WIN ? rows.slice(rows.length - RISK_WIN) : rows;
+  var rtWin = riskTotal(winRows, rows);
+  var curScore = rtWin.total;
+
   var lv, title, color;
-  if(total === null){
-    lv = 'skip'; title = '数据不足，无法判断！'; color = 'var(--mid)';
-  } else if(total >= 60){
-    lv = 'fail'; title = '数据真实性：高风险！'; color = 'var(--fail)';
-  } else if(total >= 25){
-    lv = 'warn'; title = '数据真实性：中风险！'; color = 'var(--warn)';
-  } else {
-    lv = 'ok'; title = '数据真实性：低风险！'; color = 'var(--ok)';
+  if(total === null){ lv = 'skip'; title = '数据不足'; color = 'var(--mid)'; }
+  else if(total >= 60){ lv = 'fail'; title = '高风险'; color = 'var(--fail)'; }
+  else if(total >= 25){ lv = 'warn'; title = '中风险'; color = 'var(--warn)'; }
+  else { lv = 'ok'; title = '低风险'; color = 'var(--ok)'; }
+
+  var curTitle, curColor;
+  if(curScore === null){ curTitle = '数据不足'; curColor = 'var(--mid)'; }
+  else if(curScore >= 60){ curTitle = '高风险'; curColor = 'var(--fail)'; }
+  else if(curScore >= 25){ curTitle = '中风险'; curColor = 'var(--warn)'; }
+  else { curTitle = '低风险'; curColor = 'var(--ok)'; }
+
+  var off    = total === null ? circ : circ * (1 - total / 100);
+  var offCur = curScore === null ? circ : circ * (1 - curScore / 100);
+  var dotPos    = total === null ? 0 : clamp(total, 0, 100);
+  var dotPosCur = curScore === null ? 0 : clamp(curScore, 0, 100);
+
+  /* 两卡差值：说明近两年在恶化还是缓和 */
+  var diffTxt = '';
+  if(curScore != null && total != null){
+    var d = curScore - total;
+    if(d > 2)       diffTxt = '较全历史高 ' + Math.abs(d) + ' 分，近期在恶化。';
+    else if(d < -2) diffTxt = '较全历史低 ' + Math.abs(d) + ' 分，近期在缓和。';
+    else            diffTxt = '与全历史基本持平（差 ' + Math.abs(d) + ' 分）。';
   }
 
-  var riskDesc = total === null
-    ? '有效检测项不足，无法给出真实性判断。'
-    : (total >= 60
-        ? '多项独立检验同向、持续偏离，符合系统性数据失真特征。'
-        : total >= 25
-          ? '部分检验出现偏离，但方向或持续性不足，需谨慎对待。'
-          : '各项交叉检验基本自洽，未见系统性偏离。');
+  var spanStart = rows.length ? rows[0].time : '';
+  var winN      = Math.min(RISK_WIN, rows.length);
 
-  var off = total === null ? circ : circ * (1 - total / 100);
-  var dotPos = total === null ? 0 : clamp(total, 0, 100);
+  /* 上一期（去掉最后一行重算） */
+  var prevTotal = null, prevCur = null, prevTime = '', prevRs = null, prevCs = null;
+  if(rows.length > 1){
+    var prevRows = rows.slice(0, -1);
+    var prevWin  = prevRows.length > RISK_WIN ? prevRows.slice(prevRows.length - RISK_WIN) : prevRows;
+
+    prevCur   = riskTotal(prevWin, prevRows).total;
+    prevTime  = prevRows[prevRows.length-1].time;
+
+    var prevRT = riskTotal(prevRows);
+    prevTotal = prevRT.total;
+    prevRs    = prevRT.riskScore;
+    prevCs    = prevRT.coordScore;
+  }
 
   var html = '<div class="ov-row ov-row-2">';
 
+  /* 左卡：全历史 */
   html += '<div class="ov-cell">'
-    + '<div class="ov-cell-title">真实性风险总览 · 全历史</div>'
-    + '<div class="ov-risk-left">'
+    + '<div class="ov-cell-title" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">'
+    +   '<span>真实性风险总览 · 全历史</span>'
+    +   (prevTotal != null
+         ? '<span style="font-size:12.5px;font-weight:500;color:var(--text-3);">'
+           + '上期 ' + prevTotal + ' 分 · ' + esc(prevTime.slice(0,4)) + '年' + parseInt(prevTime.slice(5),10) + '月</span>'
+         : '')
+    + '</div>'
+    + '<div class="ov-cell-gauge-wrap">'
     +   '<div class="ov-cell-gauge">'
     +     '<svg viewBox="0 0 120 120">'
     +       '<circle class="cg-bg" cx="60" cy="60" r="50"/>'
@@ -1912,27 +1957,53 @@ function renderOverview(rows){
     +     '</svg>'
     +     '<div class="cg-val"><span class="n" style="color:'+color+';">'
     +       (total === null ? '—' : total)
-    +     '</span><span class="l">风险度</span></div>'
-    +   '</div>'
-    +   '<div class="ov-risk-txt">'
-    +     '<div class="t" style="color:'+color+';">'+esc(title)+'</div>'
+    +     '</span><span class="l">'+esc(title)+'</span></div>'
     +   '</div>'
     + '</div>'
-    + '</div>';
-
-  html += '<div class="ov-cell">'
-    + '<div class="ov-cell-title">风险区位置</div>'
-    + '<div style="display:flex;align-items:center;gap:14px;">'
-    +   '<div class="ov-slider" style="flex:1;">'
-    +     '<i class="tick" style="left:25%;"></i>'
-    +     '<i class="tick" style="left:60%;"></i>'
-    +     '<i class="dot" style="left:'+dotPos+'%;background:'+color+';"></i>'
-    +   '</div>'
+    + '<div class="ov-cell-note">'
+    +   '<b>覆盖范围</b>：' + esc(spanStart) + ' 起，共 ' + rows.length + ' 期。<br>'
+    +   '反映长期水平——早期的高低分都会摊进来。'
+    + '</div>'
+    + '<div class="ov-slider" style="margin-top:14px;">'
+    +   '<i class="tick" style="left:25%;"></i>'
+    +   '<i class="tick" style="left:60%;"></i>'
+    +   '<i class="dot" style="left:'+dotPos+'%;background:'+color+';"></i>'
     + '</div>'
     + '<div class="ov-slider-ticks"><span>0</span><span>25</span><span>60</span><span>100</span></div>'
-    + '<div class="ov-cell-note">'+esc(riskDesc)+'<br>'
-    +   '由矛盾指数（55%）与协同性异常度（45%）木桶合成。风险越高，官方数据内部矛盾越多、越系统。'
+    + '</div>';
+
+  /* 右卡：当期风险 */
+  html += '<div class="ov-cell">'
+    + '<div class="ov-cell-title" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">'
+    +   '<span>真实性风险总览 · 当期风险</span>'
+    +   (prevCur != null
+         ? '<span style="font-size:12.5px;font-weight:500;color:var(--text-3);">'
+           + '上期 ' + prevCur + ' 分 · ' + esc(prevTime.slice(0,4)) + '年' + parseInt(prevTime.slice(5),10) + '月</span>'
+         : '')
     + '</div>'
+    + '<div class="ov-cell-gauge-wrap">'
+    +   '<div class="ov-cell-gauge">'
+    +     '<svg viewBox="0 0 120 120">'
+    +       '<circle class="cg-bg" cx="60" cy="60" r="50"/>'
+    +       '<circle class="cg-fg" cx="60" cy="60" r="50" stroke="'+curColor
+              + '" stroke-dasharray="'+circ+'" stroke-dashoffset="'+circ
+              + '" data-off="'+offCur+'"/>'
+    +     '</svg>'
+    +     '<div class="cg-val"><span class="n" style="color:'+curColor+';">'
+    +       (curScore === null ? '—' : curScore)
+    +     '</span><span class="l">'+esc(curTitle)+'</span></div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="ov-cell-note">'
+    +   '<b>滚动窗口</b>：只看最近 ' + winN + ' 期（约 2 年）。<br>'
+    +   esc(diffTxt)
+    + '</div>'
+    + '<div class="ov-slider" style="margin-top:14px;">'
+    +   '<i class="tick" style="left:25%;"></i>'
+    +   '<i class="tick" style="left:60%;"></i>'
+    +   '<i class="dot" style="left:'+dotPosCur+'%;background:'+curColor+';"></i>'
+    + '</div>'
+    + '<div class="ov-slider-ticks"><span>0</span><span>25</span><span>60</span><span>100</span></div>'
     + '</div>';
 
   html += '</div>';
@@ -1986,8 +2057,15 @@ function renderOverview(rows){
 
   html += '<div class="ov-row ov-row-2">';
 
+  /* 矛盾指数卡 */
   html += '<div class="ov-cell">'
-    + '<div class="ov-cell-title">矛盾指数</div>'
+    + '<div class="ov-cell-title" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">'
+    +   '<span>矛盾指数</span>'
+    +   (prevRs != null
+         ? '<span style="font-size:12.5px;font-weight:500;color:var(--text-3);">'
+           + '上期 ' + prevRs + ' 分 · ' + esc(prevTime.slice(0,4)) + '年' + parseInt(prevTime.slice(5),10) + '月</span>'
+         : '')
+    + '</div>'
     + '<div class="ov-cell-gauge-wrap">'
     +   '<div class="ov-cell-half" style="max-width:150px;">'
     +     '<svg viewBox="0 0 100 56">'
@@ -2003,10 +2081,23 @@ function renderOverview(rows){
     +   '</div>'
     + '</div>'
     + '<div class="ov-cell-note">'+esc(rsDesc)+'</div>'
+    + '<div class="ov-slider" style="margin-top:14px;">'
+    +   '<i class="tick" style="left:25%;"></i>'
+    +   '<i class="tick" style="left:60%;"></i>'
+    +   (rs != null ? '<i class="dot" style="left:'+clamp(rs,0,100)+'%;background:'+rsColor+';"></i>' : '')
+    + '</div>'
+    + '<div class="ov-slider-ticks"><span>0</span><span>25</span><span>60</span><span>100</span></div>'
     + '</div>';
 
+  /* 协同性检测卡 */
   html += '<div class="ov-cell">'
-    + '<div class="ov-cell-title">协同性检测</div>'
+    + '<div class="ov-cell-title" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">'
+    +   '<span>协同性检测</span>'
+    +   (prevCs != null
+         ? '<span style="font-size:12.5px;font-weight:500;color:var(--text-3);">'
+           + '上期 ' + prevCs + ' 分 · ' + esc(prevTime.slice(0,4)) + '年' + parseInt(prevTime.slice(5),10) + '月</span>'
+         : '')
+    + '</div>'
     + '<div class="ov-cell-gauge-wrap">'
     +   '<div class="ov-cell-half" style="max-width:150px;">'
     +     '<svg viewBox="0 0 100 56">'
@@ -2022,6 +2113,12 @@ function renderOverview(rows){
     +   '</div>'
     + '</div>'
     + '<div class="ov-cell-note">'+esc(csDesc)+'</div>'
+    + '<div class="ov-slider" style="margin-top:14px;">'
+    +   '<i class="tick" style="left:25%;"></i>'
+    +   '<i class="tick" style="left:60%;"></i>'
+    +   (cs != null ? '<i class="dot" style="left:'+clamp(cs,0,100)+'%;background:'+csColor+';"></i>' : '')
+    + '</div>'
+    + '<div class="ov-slider-ticks"><span>0</span><span>25</span><span>60</span><span>100</span></div>'
     + '</div>';
 
   html += '</div>';
@@ -2029,15 +2126,29 @@ function renderOverview(rows){
   var a = buildAnalysis(rows);
   if(a){
     var dimsCirc = Math.PI * 40;
+    var DIM_THRESH = { pmi: 50, gdp: 60, ppi_cpi: 75, m1m2: 50 };
 
     html += '<div class="ov-row ov-row-4">';
 
     a.dims.forEach(function(d){
       var cellColor = d.c;
+
+      var markHtml = '';
+      if(DIM_THRESH[d.k] != null){
+        var ang = Math.PI * (1 - DIM_THRESH[d.k]/100);
+        var xi = (50 + 36*Math.cos(ang)).toFixed(2);
+        var yi = (50 - 36*Math.sin(ang)).toFixed(2);
+        var xj = (50 + 44*Math.cos(ang)).toFixed(2);
+        var yj = (50 - 44*Math.sin(ang)).toFixed(2);
+        markHtml = '<line x1="'+xi+'" y1="'+yi+'" x2="'+xj+'" y2="'+yj
+          + '" stroke="#9aa3b5" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>';
+      }
+
       var halfHtml;
       if(d.val === null){
         halfHtml = '<div class="ov-cell-half"><svg viewBox="0 0 100 56">'
-          + '<path class="rbg" d="M 10 50 A 40 40 0 0 1 90 50"/></svg>'
+          + '<path class="rbg" d="M 10 50 A 40 40 0 0 1 90 50"/>'
+          + markHtml + '</svg>'
           + '<div class="vl" style="font-size:14px;color:var(--text-3);">—</div></div>';
       } else {
         var doff = dimsCirc * (1 - d.val/100);
@@ -2045,7 +2156,8 @@ function renderOverview(rows){
           + '<path class="rbg" d="M 10 50 A 40 40 0 0 1 90 50"/>'
           + '<path class="rfg" d="M 10 50 A 40 40 0 0 1 90 50" stroke="'+cellColor
             + '" stroke-dasharray="'+dimsCirc+'" stroke-dashoffset="'+dimsCirc
-            + '" data-off="'+doff+'"/></svg>'
+            + '" data-off="'+doff+'"/>'
+          + markHtml + '</svg>'
           + '<div class="vl">'+Math.round(d.val)+'</div></div>';
       }
 

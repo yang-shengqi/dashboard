@@ -51,7 +51,8 @@ p{margin:0;}
   box-shadow:6px 6px 12px var(--shadow-dark),-6px -6px 12px var(--shadow-light);}
 .nav-inner{width:1440px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
 .brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:15px;}
-.brand .mark{width:42px;height:42px;display:grid;place-items:center;border-radius:var(--r-sm);
+.brand .mark{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;
+  background:var(--bg);box-shadow:var(--sh-out-sm);color:var(--accent);font-size:18px;font-weight:700;}
   background:var(--bg);box-shadow:var(--sh-out-sm);color:var(--accent);font-size:18px;font-weight:700;}
 .pills{display:flex;gap:4px;padding:6px;border-radius:var(--r-full);background:var(--bg);box-shadow:var(--sh-in-sm);}
 .pill{border:none;background:transparent;color:var(--text-2);padding:9px 16px;border-radius:var(--r-full);
