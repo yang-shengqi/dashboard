@@ -107,7 +107,7 @@ var TIPS = {
   conflict_trend: '把各项矛盾检验的结果合成一个 0–100 的分数，分数越高说明数据内部矛盾越多、越不可信。',
   anchor_trend: '官方 GDP 增速减去实物量增速（发电/货运/水泥）。长期为正且较大，说明 GDP 可能虚高。',
   anchor: '用发电量、铁路货运量、水泥产量这些"做不了假"的实物指标，对照官方 GDP 增速是否可信。',
-  kq: '克强指数 = 0.4×发电量 + 0.25×铁路货运 + 0.35×中长期贷款。用它和官方 GDP 对照，看是否吻合。',
+  kq: '用发电量、铁路货运量这些实物指标合成一个增速，与官方 GDP 对照。缺少中长期贷款数据时，按现有指标重新归一。',
   tax_elast: '税收增速 ÷ 名义 GDP 增速。正常情况下两者应接近（弹性约 1），长期偏离说明产出可能被高估。',
   def: '名义 GDP 与实际 GDP 之差即"隐含平减指数"，应与 PPI/CPI 加权结果一致。不一致说明数据口径有问题。',
   ic: '固定资产投资增速与社会消费品零售增速的差。差值过大说明投资数据可能虚报（投资是地方虚报高发区）。',
@@ -809,7 +809,7 @@ function checkKeqiang(rows){
     pts.push({t:r.time, gap:r.gdp-kq});
   });
   if(pts.length < 6) return {k:'kq', n:'克强指数 vs GDP', lv:'skip',
-    msg:'构成克强指数的指标不足（需发电量/货运/中长期贷款中至少两项）。'};
+    msg:'构成克强指数的指标不足（需发电量、货运量中至少两项）。'};
 
   var g = mean(pts.slice(-6).map(function(p){ return p.gap; }));
   var lv='ok', msg='';
@@ -818,7 +818,7 @@ function checkKeqiang(rows){
   else if(Math.abs(g) > 1.5){ lv='warn'; msg='GDP 与克强指数差 '+fmt(g)+' 个百分点。'; }
   else msg='GDP 与克强指数基本吻合（差 '+fmt(g)+'）。';
   return {k:'kq', n:'克强指数 vs GDP', lv:lv, msg:msg,
-    ev:'0.4×发电量 + 0.25×货运 + 0.35×中长期贷款 ｜ 近6期差 '+fmt(g),
+    ev:'发电量/货运加权 ｜ 近6期差 '+fmt(g),
     pts:pts};
 }
 
