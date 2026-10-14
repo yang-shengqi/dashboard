@@ -131,7 +131,7 @@ textarea:focus{box-shadow:var(--sh-in-xs);}
 
 /* ============ 数据表 ============ */
 .tbl-wrap{background:var(--bg);border-radius:var(--r);box-shadow:var(--sh-out);padding:12px;
-  overflow:auto;max-height:520px;margin-bottom:8px;}
+  overflow:auto;max-height:620px;margin-bottom:8px;}
 
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;
   font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -357,7 +357,7 @@ td.na{color:var(--text-3);}
   transform:translateY(4px);
   transition:opacity 150ms ease-in-out,transform 150ms ease-in-out;
   white-space:nowrap;
-  line-height:1.4;
+  line-height:1.6;
 }
 .tooltip.show{opacity:1;transform:translateY(0);}
 .tooltip b{color:var(--accent);font-weight:600;}
@@ -616,3 +616,19 @@ td.na{color:var(--text-3);}
   transition:opacity var(--t),transform var(--t);
 }
 .toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* ============ 04 真实性风险走势（通栏） ============ */
+.risk-trend{
+  background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-out);
+  padding:20px 24px 16px;
+}
+.risk-trend-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;margin-bottom:12px;
+}
+.risk-trend-head .t{font-size:13px;font-weight:600;color:var(--text-2);}
+.risk-trend-head .v{
+  font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums;
+}
+.risk-trend-head .v b{font-weight:700;}
+.risk-trend svg{width:100%;height:auto;display:block;overflow:visible;}
