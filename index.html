@@ -80,18 +80,24 @@
     }
 
     body {
+      position: relative;                 /* FIX: 作为卡片的定位上下文 */
       background-color: var(--card-color);
-      display: flex; align-items: center; justify-content: center;
+      /* FIX: 移除 flex 居中（火狐在 flex 居中上有 bug），改用绝对定位居中 */
       font-family: "Mona Sans", sans-serif;
     }
 
     body > div {
+      /* FIX: 绝对定位 + 负边距居中，不依赖浏览器自己推算 */
+      position: absolute;
+      top: 50%;
+      left: 50%;
       width: var(--card-width);
-      aspect-ratio: 1.5/1;
+      height: calc(var(--card-width) / 1.5);      /* 替代 aspect-ratio，显式高度 */
+      margin-top: calc(var(--card-width) / -3);   /* 高度一半的负值 */
+      margin-left: calc(var(--card-width) / -2);  /* 宽度一半的负值 */
       color: white;
-      margin: auto;
       display: flex; align-items: center; justify-content: center;
-      position: relative; z-index: 2;
+      z-index: 2;
       border-radius: var(--card-radius);
       cursor: pointer;
     }
