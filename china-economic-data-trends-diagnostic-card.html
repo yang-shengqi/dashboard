@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<meta name="color-scheme" content="light">
+<title>经济数据趋势 + 真实性检验</title>
+<link rel="stylesheet" href="css/neumorphism.css">
+<script src="js/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <div class="brand"><span class="mark">Y</span><span>数据趋势 + 真实性检验</span></div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <nav class="pills">
+        <button class="pill active" data-scroll="s-import">导入</button>
+        <button class="pill" data-scroll="s-table">数据表</button>
+        <button class="pill" data-scroll="s-overview">总览</button>
+        <button class="pill" data-scroll="s-chart">趋势图</button>
+        <button class="pill" data-scroll="s-conflict">矛盾指数</button>
+        <button class="pill" data-scroll="s-coord">协同性</button>
+        <button class="pill" data-scroll="s-analysis">综合分析</button>
+      </nav>
+      <div class="range-tabs" id="rangeTabs"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="container">
+
+  <section class="hero">
+    <div class="hero__panel">
+      <span class="tagx"><i></i> Economic Data Diagnostics</span>
+      <h1>经济数据 <em>趋势 + 真实性检验</em></h1>
+      <p class="hero__lede">
+        <b>先找矛盾，再谈景气。</b>
+        <span>实物量（发电/货运/水泥）做不了假。当官方 GDP 与实物锚、税收、价格长期背离时，工具会亮灯。</span>
+      </p>
+      <div class="hero__chips">
+        <span class="chipx">实物锚背离</span>
+        <span class="chipx">克强指数对照</span>
+        <span class="chipx">税收-GDP 弹性</span>
+        <span class="chipx">平减指数一致性</span>
+        <span class="chipx">投资-消费背离</span>
+        <span class="chipx">货币-实体一致性</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01 导入 -->
+  <section id="s-import">
+    <div class="section-label"><span class="num">01</span><span class="txt">导入数据</span>
+      <span class="hint">拖拽 xlsx / csv / txt，或粘贴表格</span></div>
+    <div class="card">
+      <div class="drop-zone" id="dropZone">
+        <div class="dz-icon">📁</div>
+        <div class="dz-title">把 Excel / CSV / TXT 文件拖到这里</div>
+        <div class="dz-sub">或者</div>
+        <label class="file-label" for="fileInput">选择文件</label>
+        <input type="file" id="fileInput" accept=".csv,.txt,.tsv,.xlsx,.xls">
+        <div class="dz-hint">支持 .xlsx / .xls / .csv / .txt，表头含关键词即可识别</div>
+      </div>
+
+      <div class="or-line"><span>或直接粘贴</span></div>
+
+      <textarea id="paste" placeholder="从 Excel 复制整张表粘贴到这里。表头关键词（有多少填多少）：
+
+时间  PMI  GDP同比  名义GDP同比  PPI  CPI  PPI-CPI剪刀差  M1-M2剪刀差
+发电量同比  铁路货运量同比  水泥产量同比  工业用电量同比
+税收收入同比  M2同比  社零同比  固投同比  出口同比"></textarea>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="run">开始分析</button>
+        <button class="btn" id="demo">载入格式样板</button>
+        <button class="btn btn-danger" id="clear">清空</button>
+      </div>
+      <div class="status" id="status">等待数据。</div>
+    </div>
+  </section>
+
+  <!-- 02 数据表 -->
+  <section id="s-table">
+    <div class="section-label"><span class="num">02</span><span class="txt">数据表格</span>
+      <span class="hint">按年分页</span></div>
+    <div class="tbl-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <div class="year-tabs" id="ytabs"></div>
+  </section>
+
+  <!-- 03 数据总览 -->
+  <section id="s-overview">
+    <div class="section-label"><span class="num">03</span><span class="txt">数据总览</span>
+      <span class="hint">风险区 · 分项 · 四维信号</span></div>
+    <div id="overviewBox">
+      <div class="empty">导入数据后自动生成。</div>
+    </div>
+  </section>
+
+  <!-- 04 趋势图 -->
+  <section id="s-chart">
+    <div class="section-label">
+      <span class="num">04</span><span class="txt">数据趋势</span>
+      <span class="hint">风险走势 · 主要 · 其它 · 实物锚 · 财政 · 悬停查看数值</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:22px;">
+
+      <!-- ↓↓↓ 新增：真实性风险走势，通栏，放在最前面 ↓↓↓ -->
+      <div id="gRisk"></div>
+      <!-- ↑↑↑ 新增结束 ↑↑↑ -->
+
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:10px;padding-left:4px;">主要指标</div>
+        <div class="chart-grid chart-grid--2x2" id="gMain"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:10px;padding-left:4px;">其它指标</div>
+        <div class="chart-grid chart-grid--2x2" id="gOther"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:10px;padding-left:4px;">实物锚（最难修饰的硬指标）</div>
+        <div class="chart-grid" id="gAnchor"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:10px;padding-left:4px;">财政收支（累计同比）</div>
+        <div class="chart-grid" id="gFiscal"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 矛盾指数 -->
+  <section id="s-conflict">
+    <div class="section-label"><span class="num">05</span><span class="txt">矛盾指数</span>
+      <span class="hint">分数越高，数据内部矛盾越多</span></div>
+    <div id="conflictBox">
+      <div class="empty">导入数据后自动生成。</div>
+    </div>
+  </section>
+
+  <!-- 06 协同性检测 -->
+  <section id="s-coord">
+    <div class="section-label"><span class="num">06</span><span class="txt">协同性检测</span>
+      <span class="hint">多项指标是否长期、同向、协同背离</span></div>
+    <div id="coordBox">
+      <div class="empty">导入数据后自动生成。</div>
+    </div>
+  </section>
+
+  <!-- 07 综合分析 -->
+  <section id="s-analysis">
+    <div class="section-label"><span class="num">07</span><span class="txt">综合分析</span>
+      <span class="hint">参考信号 · 权重 · 传导 · 结论</span></div>
+    <div id="analysisBox">
+      <div class="empty">导入数据后自动生成。</div>
+    </div>
+  </section>
+
+  <div class="footer" style="margin:56px 0 40px;padding:32px 0 18px;text-align:center;
+       border-top:1px solid rgba(184,188,194,.3);">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">经济数据趋势 + 真实性检验</div>
+    <div style="font-size:12px;color:var(--text-3);max-width:62ch;margin:0 auto;">
+      数据保存在浏览器本地（localStorage），不上传任何服务器。
+    </div>
+  </div>
+
+</div>
+</main>
+
+<div class="badge-tip" id="badgeTip"></div>
+<div class="toast" id="toast"></div>
+<div class="tooltip" id="tooltip"></div>
+
+<script defer src="js/2015-data.js"></script>
+<script defer src="js/econ-diagnose.js"></script>
+</body>
+</html>
